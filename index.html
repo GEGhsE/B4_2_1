@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>국가유산 가이드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic:wght@400;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 커스텀 스타일 정의 */
+        /* 한국어 단어가 줄바꿈으로 끊기지 않도록 전역 적용 (조사 포함 어절 단위 유지) */
+        * {
+            word-break: keep-all;
+            overflow-wrap: break-word;
+        }
+        body {
+            background-color: #fdba74; /* bg-orange-300 */
+            color: #0f172a; /* text-slate-900 */
+            font-family: 'Nanum Gothic', sans-serif;
+            opacity: 1;
+        }
+
+        .font-jua { font-family: 'Jua', sans-serif; }
+
+        /* 1. 이중 프레임 바인더 카드 */
+        .binder-card {
+            background-color: #fff7ed; /* bg-orange-50 */
+            border: 5px solid #0f172a; /* 외곽 두꺼운 테두리 */
+            border-radius: 2.5rem; /* 둥근 모서리 */
+            box-shadow: none; 
+            position: relative;
+            z-index: 10;
+        }
+        
+        /* 내부 얇은 테두리 (Activities Area) */
+        .inner-frame {
+            border: 2px solid #fdba74; /* border-orange-300 */
+            border-radius: 1.5rem;
+            background-color: white;
+        }
+
+        /* 2. 오른쪽 인덱스 탭 (5개) */
+        .index-tab {
+            position: absolute;
+            right: -60px; /* 바인더 오른쪽으로 돌출 */
+            width: 70px;
+            height: 65px;
+            border: 4px solid #0f172a;
+            border-left: none; /* 바인더와 연결된 느낌 */
+            border-top-right-radius: 1rem;
+            border-bottom-right-radius: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Jua', sans-serif;
+            font-size: 1.1rem;
+            color: white;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+            z-index: 1; /* 바인더 뒤로 */
+        }
+        .index-tab:hover { transform: translateX(5px); }
+        /* 현재 학습 중인 탭 강조 */
+        .index-tab.active {
+            color: #0f172a;          /* 검정색 텍스트 */
+            font-weight: 900;
+            transform: translateX(-8px);  /* 살짝 안쪽(바인더 쪽)으로 */
+            box-shadow: 8px 4px 0px rgba(0,0,0,0.2);
+            z-index: 3;              /* 다른 탭보다 앞으로 */
+        }
+        .index-tab.active:hover { transform: translateX(-8px); }
+
+        /* 3. 아이콘형 버튼 (정사각형) */
+        .icon-btn {
+            aspect-ratio: 1 / 1;
+            background-color: #f97316; /* bg-orange-500 */
+            border: 4px solid #0f172a;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 6px 6px 0px #0f172a; /* 버튼 입체감 */
+            cursor: pointer;
+        }
+        .icon-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #0f172a;
+            background-color: #ea580c; /* bg-orange-600 */
+        }
+        .icon-btn:active {
+            transform: translate(6px, 6px);
+            box-shadow: none;
+        }
+        /* 비활성화된 버튼 스타일 */
+        .icon-btn.disabled {
+            background-color: #cbd5e1; /* bg-slate-300 */
+            border-color: #94a3b8;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.7;
+            transform: none !important;
+        }
+
+        /* 메인 메뉴 카드 스타일 */
+        .step-card {
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .step-card:hover:not(.disabled) {
+            transform: translateY(-5px);
+        }
+        .step-card.disabled {
+            filter: grayscale(100%);
+            opacity: 0.7;
+            cursor: not-allowed;
+            background-color: #e2e8f0;
+        }
+        .step-card.completed {
+            border-color: #22c55e; /* green-500 */
+            background-color: #f0fdf4; /* green-50 */
+        }
+        .check-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #22c55e;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #0f172a;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        /* 가치 이유 입력란 슬라이드 애니메이션 */
+        .reason-box {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            opacity: 0;
+            margin-top: 0;
+        }
+        .reason-box.open {
+            max-height: 80px;
+            opacity: 1;
+            margin-top: 6px;
+        }
+
+        /* 슬라이더 커스텀 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #f97316; /* orange-500 */
+            border: 3px solid #0f172a;
+            cursor: pointer;
+            margin-top: -10px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            background: #cbd5e1;
+            border-radius: 4px;
+            border: 2px solid #0f172a;
+        }
+
+        /* 스크롤바 */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 5px; border: 2px solid #0f172a; } /* orange-300 */
+        ::-webkit-scrollbar-track { background: transparent; }
+
+        /* 모달 애니메이션 */
+        .modal-pop { animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* 말풍선 애니메이션 */
+        .bubble-float { animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-5px); } 100% { transform: translateY(0px); } }
+
+        /* 키워드 칩 스타일 */
+        .keyword-chip {
+            background-color: #fff7ed; /* orange-50 */
+            border: 2px solid #fdba74; /* orange-300 */
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .keyword-chip:hover {
+            background-color: #f97316; /* orange-500 */
+            color: white;
+            border-color: #0f172a;
+            transform: scale(1.05);
+        }
+
+        /* 흔들림 애니메이션 (오답 시) */
+        .shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0% { transform: translateX(0); } 25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); } 75% { transform: translateX(-5px); } 100% { transform: translateX(0); }
+        }
+
+        /* 정답 펄스 효과 */
+        .correct-pop { animation: correctPop 0.6s ease-out; }
+        @keyframes correctPop {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 버튼 활성화 강조 (잠금 해제 순간) */
+        .btn-unlock { animation: btnUnlock 0.5s ease-out; }
+        @keyframes btnUnlock {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+
+        /* 퀴즈 O/X 버튼: 잠김 상태 (회색, 흐릿) */
+        .quiz-locked {
+            background: #e2e8f0 !important;
+            border-color: #cbd5e1 !important;
+            color: #cbd5e1 !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+            filter: grayscale(1);
+        }
+        /* 활성 상태: 선명한 색 + 부드러운 등장 */
+        .quiz-ready { animation: quizReady 0.4s ease-out; }
+        @keyframes quizReady {
+            0% { filter: grayscale(1); opacity: 0.6; transform: scale(0.96); }
+            100% { filter: grayscale(0); opacity: 1; transform: scale(1); }
+        }
+
+        /* 잠긴 버튼 위 카운트다운 오버레이 */
+        .lock-overlay {
+            position: absolute; inset: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.75);
+            border-radius: 1rem;
+            font-weight: 900;
+            color: #64748b;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        /* 색종이(confetti) */
+        .confetti-piece {
+            position: fixed;
+            width: 12px; height: 12px;
+            top: -20px;
+            z-index: 999;
+            pointer-events: none;
+            animation: confettiFall linear forwards;
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotateZ(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotateZ(720deg); opacity: 0.9; }
+        }
+
+        /* 트로피 펄스 (박사 인증) */
+        .trophy-pulse { animation: trophyPulse 1s ease-in-out infinite; }
+        @keyframes trophyPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        /* 툴팁(주석) 스타일 */
+        .tooltip-word {
+            border-bottom: 2px dotted #ea580c; /* 오렌지색 점선 */
+            cursor: help;
+            position: relative;
+            display: inline-block;
+            color: #c2410c; /* orange-700 */
+            font-weight: 800;
+        }
+        .tooltip-word:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+        .tooltip-text {
+            visibility: hidden;
+            opacity: 0;
+            width: 180px;
+            background-color: #334155; /* slate-700 */
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 50;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(0);
+            font-size: 0.85rem;
+            font-weight: normal;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            line-height: 1.3;
+            word-break: keep-all;
+            pointer-events: none;
+        }
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -6px;
+            border-width: 6px;
+            border-style: solid;
+            border-color: #334155 transparent transparent transparent;
+        }
+        /* 로그인 이름 선택 드롭다운 크게 */
+        #selectStudent {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            height: 90px;
+            font-size: 2.25rem;
+            line-height: 1.2;
+            padding: 0 3.5rem 0 1.5rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1.25rem center;
+            cursor: pointer;
+        }
+        #selectStudent option { font-size: 1.5rem; }
+    </style>
+</head>
+<body class="overflow-hidden select-none" style="width:100vw;height:100vh;margin:0;padding:0;background-color:#fdba74;">
+
+    <!-- 세로 화면 안내 오버레이 (리코더 앱 패턴) -->
+    <div id="rotate-overlay" class="hidden fixed inset-0 bg-orange-400 flex items-center justify-center z-[300]">
+        <div class="bg-white border-4 border-slate-900 rounded-3xl p-8 mx-6 max-w-md text-center shadow-2xl">
+            <h2 class="text-3xl font-black font-jua text-slate-900 mb-3">가로로 돌려주세요</h2>
+            <p class="text-lg font-bold text-slate-600 break-keep leading-relaxed">국가유산 가이드는<br>
+                <span class="text-orange-600">가로 화면</span>에서 더 편하게<br>활동할 수 있어요!
+            </p>
+        </div>
+    </div>
+
+    <!-- 로그인 화면 (첫 진입 시) -->
+    <div id="scene-login" class="fixed inset-0 bg-orange-300 flex items-center justify-center p-4 z-[200]">
+        <div class="bg-white w-full max-w-xl border-8 border-slate-900 rounded-3xl p-10 shadow-2xl modal-pop">
+            <div class="text-center mb-8">
+                <h1 class="text-6xl font-black font-jua text-slate-900">국가유산 가이드</h1>
+                <p class="text-2xl font-bold text-slate-500 mt-3">초등학교 4학년 사회</p>
+            </div>
+
+            <!-- 1단계: 이름 선택 -->
+            <div id="login-step1">
+                <label class="block text-4xl font-bold text-slate-700 mb-4">이름을 선택하세요</label>
+                <select id="selectStudent"
+                    class="w-full bg-orange-50 border-8 border-slate-900 rounded-xl font-bold text-left focus:bg-yellow-50 outline-none mb-6 shadow-[4px_4px_0px_#0f172a]">
+                    <option value="">먼저 이름을 골라요</option>
+                </select>
+                <button onclick="checkStudentId()"
+                    class="w-full bg-orange-500 border-4 border-slate-900 rounded-xl font-black text-5xl text-white py-5 shadow-[6px_6px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">다음 ▶
+                </button>
+                <p id="login-error" class="hidden mt-4 text-red-500 font-bold text-2xl text-center"></p>
+
+                <!-- 선생님 메뉴 (설정) -->
+                <div id="teacher-menu-wrap" class="hidden mt-5">
+                    <button onclick="toggleSettings()" class="w-full bg-white border-2 border-slate-400 rounded-lg text-xl text-slate-500 py-2.5 hover:bg-slate-50 transition">선생님 메뉴</button>
+
+                    <div id="settings-panel" class="hidden mt-3 bg-slate-50 border-2 border-slate-300 rounded-xl p-5 text-left">
+                        <p class="text-lg text-slate-600 mb-2">내 구글 시트 웹앱 주소를 붙여넣고 연결하세요.</p>
+                        <input type="text" id="execUrlInput" placeholder="https://script.google.com/.../exec"
+                            class="w-full bg-white border-2 border-slate-400 rounded-lg p-3 text-base mb-3 outline-none focus:border-orange-400">
+                        <button onclick="connectSheet()" class="w-full bg-orange-500 text-white rounded-lg py-3 text-xl hover:bg-orange-600 transition">연결하기</button>
+                        <p id="connect-status" class="hidden mt-2 text-base text-center"></p>
+
+                        <div id="student-link-box" class="hidden mt-4 pt-4 border-t-2 border-slate-200">
+                            <p class="text-lg text-slate-600 mb-2">학생용 입장 주소 (복사해서 학생에게 공유)</p>
+                            <div class="flex gap-2">
+                                <input type="text" id="studentLinkInput" readonly
+                                    class="flex-1 bg-white border-2 border-slate-400 rounded-lg p-3 text-base outline-none">
+                                <button onclick="copyStudentLink()" class="bg-slate-700 text-white rounded-lg px-4 text-lg hover:bg-slate-800 transition shrink-0">복사</button>
+                            </div>
+                        </div>
+                        <div id="connected-info" class="hidden mt-3">
+                            <button onclick="disconnectSheet()" class="text-base text-red-500 underline">연결 해제</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2단계: 이름 확인 -->
+            <div id="login-step2" class="hidden">
+                <div class="bg-yellow-50 border-4 border-yellow-400 rounded-xl p-8 text-center mb-6">
+                    <p class="text-6xl font-black font-jua text-slate-900 my-4">
+                        <span id="confirmStudentName"></span>
+                    </p>
+                    <p class="text-2xl font-bold text-slate-500">맞나요?</p>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="backToStep1()"
+                        class="flex-1 bg-slate-200 border-4 border-slate-500 rounded-xl font-black text-4xl text-slate-700 py-5 hover:bg-slate-300 transition">아니에요
+                    </button>
+                    <button onclick="confirmLogin()"
+                        class="flex-1 bg-green-500 border-4 border-slate-900 rounded-xl font-black text-4xl text-white py-5 shadow-[6px_6px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">맞아요!
+                    </button>
+                </div>
+            </div>
+
+            <!-- 로딩 -->
+            <div id="login-loading" class="hidden text-center py-8">
+                <div class="inline-block w-16 h-16 border-8 border-orange-300 border-t-orange-600 rounded-full animate-spin mb-4"></div>
+                <p class="font-bold text-slate-600 text-2xl">확인하고 있어요...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scale 반응형 래퍼 (메인 앱) -->
+    <div id="scale-container" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;">
+        <div id="scale-wrapper" style="width:1000px;height:640px;transform-origin:center center;position:relative;flex-shrink:0;">
+            <div class="relative w-full h-full flex">
+        
+        <!-- 오른쪽 태그: 5개 -->
+        <div class="hidden md:block">
+            <div class="index-tab bg-red-400" data-scene="main" style="top: 80px;" onclick="goToMain()">준비</div>
+            <div class="index-tab bg-orange-400" data-scene="concept" style="top: 155px;" onclick="goToStep('concept')">개념</div>
+            <div class="index-tab bg-yellow-400" data-scene="quiz" style="top: 230px;" onclick="checkTabAccess('quiz')">퀴즈</div>
+            <div class="index-tab bg-green-400" data-scene="goal" style="top: 305px;" onclick="checkTabAccess('goal')">소개</div>
+            <div class="index-tab bg-indigo-400" data-scene="result" style="top: 380px;" onclick="checkTabAccess('result')">결과</div>
+        </div>
+
+        <div class="binder-card w-full h-full flex flex-col overflow-hidden">
+            
+            <header class="h-24 shrink-0 flex items-center justify-between px-8 border-b-4 border-slate-900 bg-white z-20 relative">
+                <div class="flex items-center gap-4 cursor-pointer" onclick="goToMain()">
+                    <div class="hidden md:block border-3 border-slate-900 bg-orange-100 rounded-full px-6 py-2">
+                        <span class="text-lg font-bold text-slate-900 font-jua">초등학교 4학년 사회</span>
+                    </div>
+                    <h1 class="text-2xl md:text-5xl font-black text-slate-900 font-jua tracking-tighter">국가유산 가이드
+                    </h1>
+                </div>
+                
+                <div class="flex gap-2 relative z-50 items-center">
+                    <div id="studentBadge" class="hidden bg-orange-100 border-3 border-slate-900 rounded-xl px-4 py-2 font-jua text-lg">
+                         <span id="displayStudentName">-</span>
+                    </div>
+                    <button onclick="openConceptModal()" class="border-3 border-slate-900 bg-yellow-400 hover:bg-yellow-300 rounded-xl px-4 py-2 font-bold shadow-[4px_4px_0px_#0f172a] active:translate-y-1 active:shadow-none transition flex items-center gap-2 cursor-pointer">
+                        <span class="hidden md:inline font-jua text-xl">개념 콕콕</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="progressArea" class="hidden h-10 bg-slate-200 border-b-4 border-slate-900 flex items-center px-4 gap-2">
+                <div class="font-jua text-slate-600 text-lg mr-2 shrink-0">진행상황:</div>
+                <div class="flex-1 h-4 bg-white border-2 border-slate-900 rounded-full overflow-hidden">
+                    <div id="progressBar" class="h-full bg-orange-500 transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div id="stepIndicator" class="font-bold text-orange-600 text-sm shrink-0 w-24 text-right">준비 중</div>
+            </div>
+
+            <main class="flex-1 p-4 md:p-6 overflow-hidden bg-orange-50">
+                
+                <!-- 1. 메인 로비 (로드맵 대시보드) -->
+                <section id="scene-main" class="h-full flex flex-col items-center justify-center">
+                    <h2 class="text-4xl font-black font-jua text-slate-900 mb-8 text-center bg-white px-8 py-2 rounded-full border-3 border-slate-900 shadow-md">오늘의 학습
+                    </h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 w-full max-w-6xl h-auto md:h-[50vh]">
+                        <!-- Step 1 -->
+                        <div id="card-step1" onclick="goToStep('concept')" class="step-card bg-white border-4 border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg cursor-pointer group hover:bg-yellow-50">
+                            <h3 class="text-2xl font-black font-jua text-slate-900 mb-2">1. 개념 익히기</h3>
+                            <p class="text-center font-bold text-slate-500 mb-4">국가유산이 무엇인지<br>알아보아요.</p>
+                            <div id="badge-step1" class="bg-yellow-400 text-slate-900 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-900 shadow-sm">입장하기</div>
+                        </div>
+                        <!-- Step 2 -->
+                        <div id="card-step2" onclick="goToStep('quiz')" class="step-card disabled bg-white border-4 border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg cursor-pointer group hover:bg-orange-50">
+                            <h3 class="text-2xl font-black font-jua text-slate-900 mb-2">2. 퀴즈 풀기</h3>
+                            <p class="text-center font-bold text-slate-500 mb-4">배운 내용을<br>확인해보아요.</p>
+                            <div id="badge-step2" class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-300">잠김</div>
+                        </div>
+                        <!-- Step 3 -->
+                        <div id="card-step3" onclick="goToStep('goal')" class="step-card disabled bg-white border-4 border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg cursor-pointer group hover:bg-orange-50">
+                            <h3 class="text-2xl font-black font-jua text-slate-900 mb-2">3. 소개하기</h3>
+                            <p class="text-center font-bold text-slate-500 mb-4">나만의 국가유산<br>카드를 만들어요.</p>
+                            <div id="badge-step3" class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-300">잠김</div>
+                        </div>
+                        <!-- Step 4 -->
+                        <div id="card-step4" onclick="goToStep('result')" class="step-card disabled bg-white border-4 border-slate-900 rounded-2xl p-6 flex flex-col items-center justify-center shadow-lg cursor-pointer group hover:bg-green-50">
+                            <h3 class="text-2xl font-black font-jua text-slate-900 mb-2">4. 결과 확인</h3>
+                            <p class="text-center font-bold text-slate-500 mb-4">완성된 카드를<br>모아서 봐요.</p>
+                            <div id="badge-step4" class="bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-300">잠김</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. 개념 학습 화면 -->
+                <section id="scene-concept" class="hidden h-full flex flex-col">
+                    <div class="flex items-center mb-3">
+                        <button onclick="goToMain()" class="bg-white border-2 border-slate-900 rounded-lg px-4 py-2 font-bold hover:bg-slate-100">◀ 돌아가기</button>
+                        <div class="flex-1 text-center">
+                            <div class="inline-block border-3 border-slate-900 bg-yellow-100 px-8 py-2 rounded-full shadow-md">
+                                <h2 class="text-2xl font-black text-slate-900 font-jua">국가유산 개념 익히기</h2>
+                            </div>
+                        </div>
+                        <div class="w-24"></div> <!-- 여백용 -->
+                    </div>
+
+                    <div class="flex-1 bg-white border-4 border-slate-900 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col">
+                        
+                        <!-- [개념 1] 유산의 종류 화면 (슬라이드 방식) -->
+                        <div id="concept-part-1" class="h-full flex flex-col">
+
+                            <!-- 슬라이드 공통: 단계 뱃지 -->
+                            <div class="text-center mb-2 shrink-0">
+                                <span class="bg-indigo-500 text-white px-4 py-1 rounded-full text-base font-bold inline-block border-2 border-slate-900 shadow-sm">1단계 · <span id="slide-indicator">1 / 7</span>
+                                </span>
+                            </div>
+
+                            <div class="flex-1 min-h-0 relative">
+
+                            <!-- 슬라이드 1: 국가유산이란 (무엇이 남아있나) -->
+                            <div class="concept-slide absolute inset-0" data-slide="1">
+                                <div class="bg-orange-50 border-4 border-orange-300 rounded-3xl p-8 shadow-md h-full flex flex-col justify-center">
+                                    <div class="text-center mb-4">
+                                        <h3 class="font-jua text-4xl text-slate-900">국가유산이란?</h3>
+                                    </div>
+                                    <div class="bg-white rounded-2xl p-6 border-3 border-orange-200">
+                                        <p class="text-slate-700 font-bold leading-relaxed break-keep text-2xl text-center">우리 지역에는 옛날 사람들이 어떻게 살았는지 알 수 있는 
+                                            <span class="text-orange-600">생활 도구, 생활 방식, 건물, 음악이나 춤</span> 등이 남아 있어요.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 2: 국가유산이란 (물려줄 가치) -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="2">
+                                <div class="bg-orange-50 border-4 border-orange-300 rounded-3xl p-8 shadow-md h-full flex flex-col justify-center">
+                                    <div class="bg-white rounded-2xl p-6 border-3 border-orange-200 text-center">
+                                        <p class="text-slate-700 font-bold leading-relaxed break-keep text-2xl">그중에서 <span class="bg-yellow-200 px-2 rounded text-slate-900">후손들에게 물려줄 만한 가치가 있는 것</span>을
+                                        </p>
+                                        <p class="mt-4 font-black font-jua text-4xl text-orange-600">
+                                            '국가유산' 이라고 해요!
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 3: 두 가지로 나뉘어요 -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="3">
+                                <div class="h-full flex flex-col justify-center">
+                                    <div class="text-center mb-4">
+                                        <h3 class="font-jua text-3xl text-indigo-700 mb-2">국가유산은 크게 <span class="text-orange-600">두 가지</span>로 나뉘어요!</h3>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-5">
+                                        <div class="bg-red-50 border-4 border-red-300 rounded-3xl p-6 text-center shadow-sm">
+                                            <h4 class="font-black font-jua text-3xl text-red-500 mb-3">문화유산</h4>
+                                            <p class="text-2xl font-bold text-slate-700 break-keep">눈에 <span class="bg-red-200 px-1 rounded">보이는</span> 유산
+                                            </p>
+                                        </div>
+                                        <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl p-6 text-center shadow-sm">
+                                            <h4 class="font-black font-jua text-3xl text-blue-500 mb-3">무형유산</h4>
+                                            <p class="text-2xl font-bold text-slate-700 break-keep">눈에 <span class="bg-blue-200 px-1 rounded">보이지 않는</span> 유산
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 4: 문화유산이란 (정의) -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="4">
+                                <div class="bg-red-50 border-4 border-red-300 rounded-3xl p-8 shadow-md h-full flex flex-col justify-center">
+                                    <div class="text-center mb-4">
+                                        <h4 class="font-black font-jua text-4xl text-red-500">문화유산</h4>
+                                        <p class="text-2xl font-bold text-red-400 mt-1">눈에 보이는 유산</p>
+                                    </div>
+                                    <div class="bg-white rounded-2xl p-6 border-3 border-red-200">
+                                        <p class="text-2xl font-bold text-slate-700 text-center break-keep leading-relaxed">
+                                            눈에 보이고 만질 수 있는 <span class="bg-red-100 px-2 rounded border border-red-300 text-red-600">형태가 있는</span> 유산이에요.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 5: 문화유산 예시 -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="5">
+                                <div class="bg-red-50 border-4 border-red-300 rounded-3xl p-6 shadow-md h-full flex flex-col justify-center">
+                                    <p class="font-black text-red-500 text-2xl text-center mb-4 border-b-3 border-red-200 pb-2">문화유산 예시</p>
+                                    <div class="grid grid-cols-2 gap-x-5 gap-y-2 text-2xl font-bold text-slate-700">
+                                        <span>• 숭례문 (서울)</span>
+                                        <span>• 불국사·석굴암</span>
+                                        <span>• 훈민정음 해례본</span>
+                                        <span>• 경복궁 (서울)</span>
+                                        <span>• 청자 매병</span>
+                                        <span>• 백제 금동대향로</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 6: 무형유산이란 (정의) -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="6">
+                                <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl p-8 shadow-md h-full flex flex-col justify-center">
+                                    <div class="text-center mb-4">
+                                        <h4 class="font-black font-jua text-4xl text-blue-500">무형유산</h4>
+                                        <p class="text-2xl font-bold text-blue-400 mt-1">눈에 보이지 않는 유산</p>
+                                    </div>
+                                    <div class="bg-white rounded-2xl p-6 border-3 border-blue-200">
+                                        <p class="text-2xl font-bold text-slate-700 text-center break-keep leading-relaxed">
+                                            형태는 없지만 <span class="bg-blue-100 px-2 rounded border border-blue-300 text-blue-600">사람을 통해 전해지는</span> 기술과 예술이에요.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 슬라이드 7: 무형유산 예시 -->
+                            <div class="concept-slide hidden absolute inset-0" data-slide="7">
+                                <div class="bg-blue-50 border-4 border-blue-300 rounded-3xl p-6 shadow-md h-full flex flex-col justify-center">
+                                    <p class="font-black text-blue-500 text-2xl text-center mb-4 border-b-3 border-blue-200 pb-2">무형유산 예시</p>
+                                    <div class="grid grid-cols-2 gap-x-5 gap-y-2 text-2xl font-bold text-slate-700">
+                                        <span>• 판소리 (전라도)</span>
+                                        <span>• 아리랑 (전국)</span>
+                                        <span>• 봉산 탈춤</span>
+                                        <span>• 강강술래 (전남)</span>
+                                        <span>• 택견·씨름</span>
+                                        <span>• 김장 문화</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            </div> <!-- /flex items-center -->
+
+                            <!-- 슬라이드 네비게이션 -->
+                            <div class="mt-2 shrink-0">
+                                <!-- 진행 점 인디케이터 -->
+                                <div class="flex justify-center gap-2 mb-2">
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-orange-500 border-2 border-slate-900" data-dot="1"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="2"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="3"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="4"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="5"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="6"></span>
+                                    <span class="slide-dot w-3 h-3 rounded-full bg-slate-200 border-2 border-slate-400" data-dot="7"></span>
+                                </div>
+                                <!-- 이전/다음 버튼 -->
+                                <div class="flex justify-center items-center gap-4">
+                                    <button id="slide-prev-btn" onclick="changeSlide(-1)" class="bg-sky-400 text-white text-base font-black py-2 px-6 rounded-full border-3 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-sky-300 hover:translate-y-1 hover:shadow-none transition">
+                                        ◀ 이전
+                                    </button>
+                                    <button id="slide-next-btn" onclick="changeSlide(1)" class="bg-orange-500 text-white text-base font-black py-2 px-6 rounded-full border-3 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-orange-400 hover:translate-y-1 hover:shadow-none transition">다음 ▶
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="concept-part-2" class="hidden h-full flex flex-col">
+                            <div class="text-center mb-2 shrink-0">
+                                <span class="bg-green-500 text-white px-4 py-1 rounded-full text-base font-bold inline-block border-2 border-slate-900 shadow-sm mb-1">2단계</span>
+                                <h3 class="font-jua text-xl text-green-700">우리가 지켜야 할 4가지 보물 같은 가치!</h3>
+                                <p class="text-sm font-bold text-slate-500">카드 위에 마우스를 올리면 자세한 설명이 나와요!</p>
+                            </div>
+
+                            <!-- 2×2 카드 그리드 -->
+                            <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-3 min-h-0">
+
+                                <!-- 카드 1: 역사적 가치 -->
+                                <div class="value-card group bg-white border-4 border-amber-300 rounded-2xl p-4 relative cursor-pointer transition hover:border-amber-500 hover:shadow-[4px_4px_0px_#f59e0b] flex items-center gap-4">
+                                    <div>
+                                        <h4 class="font-black font-jua text-2xl text-amber-600">역사적 가치</h4>
+                                        <p class="text-sm font-bold text-slate-500 mt-1">옛날 사람들의 흔적</p>
+                                    </div>
+                                    <!-- 팝업 -->
+                                    <div class="value-popup absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] bg-amber-50 rounded-2xl p-4 border-4 border-amber-500 shadow-2xl invisible opacity-0 scale-90 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none">
+                                        <div class="flex items-center gap-2 mb-2 pb-2 border-b-2 border-amber-200">
+                                            <h4 class="font-black font-jua text-xl text-amber-600">역사적 가치</h4>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700 leading-snug break-keep mb-2">옛날 조상들이 어떻게 살았는지 알 수 있는 <span class="bg-amber-200 px-1 rounded">증거</span>가 돼요.
+                                        </p>
+                                        <div class="bg-white rounded-lg p-2 border-2 border-amber-200">
+                                            <p class="font-black text-amber-600 text-sm mb-1">대표 예시</p>
+                                            <ul class="text-sm font-bold text-slate-700 space-y-0.5">
+                                                <li>고인돌 (선사 시대 무덤)</li>
+                                                <li>경주 역사 유적 지구</li>
+                                                <li>남한산성 (병자호란)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 카드 2: 과학적 가치 -->
+                                <div class="value-card group bg-white border-4 border-blue-300 rounded-2xl p-4 relative cursor-pointer transition hover:border-blue-500 hover:shadow-[4px_4px_0px_#3b82f6] flex items-center gap-4">
+                                    <div>
+                                        <h4 class="font-black font-jua text-2xl text-blue-600">과학적 가치</h4>
+                                        <p class="text-sm font-bold text-slate-500 mt-1">뛰어난 기술과 지혜</p>
+                                    </div>
+                                    <div class="value-popup absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] bg-blue-50 rounded-2xl p-4 border-4 border-blue-500 shadow-2xl invisible opacity-0 scale-90 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none">
+                                        <div class="flex items-center gap-2 mb-2 pb-2 border-b-2 border-blue-200">
+                                            <h4 class="font-black font-jua text-xl text-blue-600">과학적 가치</h4>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700 leading-snug break-keep mb-2">조상들의 <span class="bg-blue-200 px-1 rounded">뛰어난 기술과 지혜</span>가 담겨 있어요.
+                                        </p>
+                                        <div class="bg-white rounded-lg p-2 border-2 border-blue-200">
+                                            <p class="font-black text-blue-600 text-sm mb-1">대표 예시</p>
+                                            <ul class="text-sm font-bold text-slate-700 space-y-0.5">
+                                                <li>첨성대 (달력 원리)</li>
+                                                <li>수원 화성 (거중기)</li>
+                                                <li>훈민정음,  온돌</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 카드 3: 예술·심미적 가치 -->
+                                <div class="value-card group bg-white border-4 border-pink-300 rounded-2xl p-4 relative cursor-pointer transition hover:border-pink-500 hover:shadow-[4px_4px_0px_#ec4899] flex items-center gap-4">
+                                    <div>
+                                        <h4 class="font-black font-jua text-2xl text-pink-600">예술·심미적 가치</h4>
+                                        <p class="text-sm font-bold text-slate-500 mt-1">우리 고유의 아름다움</p>
+                                    </div>
+                                    <div class="value-popup absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] bg-pink-50 rounded-2xl p-4 border-4 border-pink-500 shadow-2xl invisible opacity-0 scale-90 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none">
+                                        <div class="flex items-center gap-2 mb-2 pb-2 border-b-2 border-pink-200">
+                                            <h4 class="font-black font-jua text-xl text-pink-600">예술·심미적 가치</h4>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700 leading-snug break-keep mb-2">우리 고유의 <span class="bg-pink-200 px-1 rounded">아름다움과 멋</span>을 느낄 수 있어요.
+                                        </p>
+                                        <div class="bg-white rounded-lg p-2 border-2 border-pink-200">
+                                            <p class="font-black text-pink-600 text-sm mb-1">대표 예시</p>
+                                            <ul class="text-sm font-bold text-slate-700 space-y-0.5">
+                                                <li>고려청자 (비색)</li>
+                                                <li>한복,  하회탈</li>
+                                                <li>백제 금동대향로</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 카드 4: 생태·환경적 가치 -->
+                                <div class="value-card group bg-white border-4 border-green-300 rounded-2xl p-4 relative cursor-pointer transition hover:border-green-500 hover:shadow-[4px_4px_0px_#22c55e] flex items-center gap-4">
+                                    <div>
+                                        <h4 class="font-black font-jua text-2xl text-green-600">생태·환경적 가치</h4>
+                                        <p class="text-sm font-bold text-slate-500 mt-1">자연과의 조화</p>
+                                    </div>
+                                    <div class="value-popup absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] bg-green-50 rounded-2xl p-4 border-4 border-green-500 shadow-2xl invisible opacity-0 scale-90 group-hover:visible group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 z-50 pointer-events-none">
+                                        <div class="flex items-center gap-2 mb-2 pb-2 border-b-2 border-green-200">
+                                            <h4 class="font-black font-jua text-xl text-green-600">생태·환경적 가치</h4>
+                                        </div>
+                                        <p class="text-sm font-bold text-slate-700 leading-snug break-keep mb-2">자연과 <span class="bg-green-200 px-1 rounded">조화</span>를 이루거나 자연 그 자체로 소중해요.
+                                        </p>
+                                        <div class="bg-white rounded-lg p-2 border-2 border-green-200">
+                                            <p class="font-black text-green-600 text-sm mb-1">대표 예시</p>
+                                            <ul class="text-sm font-bold text-slate-700 space-y-0.5">
+                                                <li>독도 (다양한 바다 생물)</li>
+                                                <li>창덕궁 후원,  한옥</li>
+                                                <li>갯벌 (생태계 보물창고)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div class="text-center mt-2 flex gap-4 justify-center shrink-0">
+                                <button onclick="prevConcept()" class="bg-slate-300 text-slate-700 text-base font-black py-2 px-5 rounded-full border-3 border-slate-500 hover:bg-slate-200 transition">
+                                    ◀ 다시 볼래
+                                </button>
+                                <button onclick="completeStep(1)" class="bg-yellow-400 text-slate-900 text-base font-black py-2 px-8 rounded-full border-3 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:bg-yellow-300 hover:translate-y-1 hover:shadow-none transition">완벽하게 이해했어! (완료)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. 퀴즈 화면 -->
+                <section id="scene-quiz" class="hidden h-full flex flex-col items-center justify-center">
+                    
+                    <!-- 퀴즈 설정 화면 -->
+                    <div id="quiz-setup" class="bg-white border-4 border-slate-900 rounded-2xl p-8 shadow-2xl w-full max-w-2xl text-center relative">
+                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-indigo-500 text-white font-black px-6 py-2 rounded-full border-3 border-slate-900 text-xl">퀴즈 도전!</div>
+                        
+                        <h3 class="text-3xl font-black text-slate-800 mb-4 mt-4">문제를 몇 개 풀어볼까요?</h3>
+                        <p class="text-lg font-bold text-slate-500 mb-8">많이 풀수록 실력이 쑥쑥 자라요!</p>
+                        
+                        <div class="flex gap-6 justify-center">
+                            <button onclick="startQuizGame(5)" class="group w-32 h-32 rounded-full bg-yellow-400 border-4 border-slate-900 flex flex-col items-center justify-center hover:scale-110 transition shadow-lg">
+                                <span class="font-black text-2xl text-slate-900">5개</span>
+                            </button>
+                            <button onclick="startQuizGame(10)" class="group w-32 h-32 rounded-full bg-orange-400 border-4 border-slate-900 flex flex-col items-center justify-center hover:scale-110 transition shadow-lg">
+                                <span class="font-black text-2xl text-slate-900">10개</span>
+                            </button>
+                            <button onclick="startQuizGame(15)" class="group w-32 h-32 rounded-full bg-red-400 border-4 border-slate-900 flex flex-col items-center justify-center hover:scale-110 transition shadow-lg">
+                                <span class="font-black text-2xl text-slate-900">15개</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 퀴즈 진행 화면 -->
+                    <div id="quiz-game" class="hidden bg-white border-4 border-slate-900 rounded-2xl p-8 shadow-2xl w-full max-w-2xl text-center relative">
+                        <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-indigo-500 text-white font-black px-6 py-2 rounded-full border-3 border-slate-900 text-xl">문제 <span id="quiz-progress">1/3</span>
+                        </div>
+                        
+                        <div class="mt-4 mb-8 min-h-[120px] flex flex-col justify-center">
+                            <h3 id="quiz-question" class="text-2xl md:text-3xl font-black text-slate-800 break-keep leading-relaxed">
+                                <!-- 질문 내용 (innerHTML로 렌더링) -->
+                            </h3>
+                        </div>
+
+                        <!-- 힌트 영역 -->
+                        <div id="quiz-hint" class="hidden mb-6 bg-yellow-100 p-4 rounded-xl border-2 border-yellow-400 text-slate-800 animate-bounce">
+                            <span id="quiz-hint-text" class="font-bold text-lg">힌트 내용</span>
+                        </div>
+
+                        <div id="quiz-options" class="flex gap-6 justify-center">
+                            <button onclick="submitQuizAnswer(true)" class="quiz-option-btn quiz-o-btn w-40 py-4 bg-green-50 border-4 border-green-400 rounded-2xl font-black text-4xl text-green-500 hover:bg-green-100 transition">O</button>
+                            <button onclick="submitQuizAnswer(false)" class="quiz-option-btn quiz-x-btn w-40 py-4 bg-red-50 border-4 border-red-400 rounded-2xl font-black text-4xl text-red-500 hover:bg-red-100 transition">X</button>
+                        </div>
+
+                        <div id="quiz-feedback" class="hidden mt-6 bg-slate-100 p-6 rounded-xl border-2 border-slate-300">
+                            <div id="feedback-result" class="text-2xl font-black mb-2">정답!</div>
+                            <p id="feedback-text" class="text-lg font-bold text-slate-700 mb-4 leading-relaxed break-keep"></p>
+                            <button onclick="nextQuizQuestion()" class="bg-indigo-500 text-white px-8 py-3 rounded-xl font-black text-lg border-2 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">다음 문제 ▶
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="quiz-result-screen" class="hidden bg-white border-4 border-slate-900 rounded-2xl shadow-2xl w-full flex overflow-hidden" style="max-height:500px;">
+                        
+                        <!-- 왼쪽: 점수 + 버튼 -->
+                        <div class="w-56 shrink-0 flex flex-col items-center justify-center p-6 border-r-4 border-slate-900 bg-indigo-50">
+                            <h3 class="text-2xl font-black text-slate-900 mb-1">퀴즈 완료!</h3>
+                            <p class="font-bold text-slate-600 mb-1 text-sm">
+                                <span id="quiz-final-score" class="text-orange-600 text-3xl font-black">3</span>개 정답
+                            </p>
+                            <p id="quiz-wrong-count" class="text-red-500 font-bold text-sm mb-5"></p>
+                            <button onclick="goToActivityDirect()" class="w-full bg-green-500 text-white text-base font-black py-2.5 rounded-xl border-3 border-slate-900 shadow-[3px_3px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition mb-2">활동하러 가기 
+                            </button>
+                            <button onclick="resetQuiz()" class="text-slate-400 font-bold underline hover:text-slate-600 text-xs">다시 풀기</button>
+                        </div>
+
+                        <!-- 오른쪽: 오답 목록 -->
+                        <div class="flex-1 flex flex-col overflow-hidden">
+                            <div class="bg-red-50 border-b-3 border-slate-900 px-5 py-3 shrink-0">
+                                <h4 class="font-black text-lg text-red-600 flex items-center gap-2">
+                                    <span></span>틀린 문제 다시 생각하기
+                                </h4>
+                            </div>
+                            <!-- 오답 없을 때 -->
+                            <div id="quiz-no-wrong" class="hidden flex-1 flex flex-col items-center justify-center text-center p-6">
+                                <div id="no-wrong-trophy" class="inline-block bg-yellow-300 border-4 border-slate-900 rounded-2xl px-8 py-3 mb-3 shadow-[4px_4px_0px_#0f172a]">
+                                    <span class="font-black font-jua text-3xl text-slate-900">박사 인증</span>
+                                </div>
+                                <p class="font-black text-2xl text-green-600">모두 맞혔어요!</p>
+                                <p class="text-base font-bold text-slate-500 mt-1">국가유산 박사로 인정합니다!</p>
+                            </div>
+                            <!-- 오답 목록 -->
+                            <div id="quiz-wrong-list" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-3"></div>
+                        </div>
+                    </div>
+
+                    <button id="btn-quiz-back" onclick="goToMain()" class="mt-6 text-slate-500 font-bold underline hover:text-slate-800">메인으로 돌아가기</button>
+                </section>
+
+                <!-- 4. 목표 설정 화면 -->
+                <section id="scene-goal" class="hidden h-full flex flex-col items-center justify-center text-center">
+                    <div class="mb-10 border-3 border-slate-900 bg-white px-10 py-6 rounded-2xl shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
+                        <h2 class="text-4xl md:text-6xl font-black text-slate-900 font-jua mb-2">활동 목표 정하기</h2>
+                        <p class="text-xl text-slate-500 font-bold">"오늘 조사할 우리 지역의 보물은 몇 개?"</p>
+                    </div>
+                    <div class="flex gap-4 md:gap-10">
+                        <button onclick="startGame(1)" class="icon-btn w-32 h-32 md:w-40 md:h-40 group">
+                            <span class="text-3xl font-black text-white font-jua">1개</span>
+                        </button>
+                        <button onclick="startGame(2)" class="icon-btn w-32 h-32 md:w-40 md:h-40 group bg-orange-600">
+                            <span class="text-3xl font-black text-white font-jua">2개</span>
+                            <span class="text-sm text-orange-200 font-bold mt-1">추천!</span>
+                        </button>
+                        <button onclick="startGame(3)" class="icon-btn w-32 h-32 md:w-40 md:h-40 group bg-indigo-500">
+                            <span class="text-3xl font-black text-white font-jua">3개</span>
+                        </button>
+                    </div>
+                    <button onclick="goToMain()" class="mt-10 text-slate-500 font-bold underline hover:text-slate-800">메인으로 돌아가기</button>
+                </section>
+
+                <!-- 5. 활동 화면 -->
+                <section id="scene-activity" class="hidden h-full flex flex-col md:flex-row gap-6">
+                    <div class="w-full md:flex-1 md:min-w-0 h-full inner-frame flex flex-col shadow-inner bg-white relative overflow-hidden">
+                        <div class="bg-indigo-50 border-b-2 border-slate-200 p-4 flex items-center gap-3 shrink-0 z-10">
+                            <div class="text-3xl bubble-float">‍</div>
+                            <div class="flex-1 bg-white border-2 border-slate-900 rounded-xl p-3 relative">
+                                <div class="absolute -left-2 top-1/2 -translate-y-1/2 w-4 h-4 bg-white border-l-2 border-b-2 border-slate-900 transform rotate-45"></div>
+                                <p id="teacherTipText" class="text-sm font-bold text-slate-800 break-keep">국가유산 조사 활동을 시작해볼까요?</p>
+                            </div>
+                        </div>
+                        <div class="flex-1 p-6 overflow-y-auto custom-scroll">
+                            <div class="space-y-8">
+                                <div class="bg-orange-50 p-4 rounded-xl border-2 border-slate-200">
+                                    <label class="block text-lg font-bold text-slate-700 mb-2">이름과 사진</label>
+                                    <input type="text" id="inputName" placeholder="예: 숭례문, 아리랑" class="w-full bg-white border-3 border-slate-900 p-3 rounded-xl text-lg font-bold focus:bg-orange-50 outline-none mb-3" onfocus="setTip('name')">
+                                    <div class="flex items-center gap-3">
+                                        <button type="button" onclick="document.getElementById('inputImage').click()" onmouseenter="setTip('image')" class="bg-white border-3 border-slate-900 rounded-xl px-4 py-2.5 font-bold text-slate-700 hover:bg-orange-100 transition shadow-[2px_2px_0px_#0f172a] active:translate-y-0.5 active:shadow-none shrink-0">사진 붙이기</button>
+                                        <input type="file" id="inputImage" accept="image/*" class="hidden" onchange="previewImage(event)">
+                                        <span id="imageStatus" class="text-sm font-bold text-slate-400">선택된 사진 없음</span>
+                                    </div>
+                                </div>
+                                <div class="bg-yellow-50 p-4 rounded-xl border-2 border-slate-200" onmouseenter="setTip('stats')">
+                                    <label class="block text-lg font-bold text-slate-700 mb-1">가치 분석표</label>
+                                    <p class="text-sm font-bold text-slate-500 mb-4">가장 자신 있는 가치 <span class="text-orange-500">한 가지 이상</span>의 이유를 써주세요.</p>
+                                    <div class="space-y-5">
+                                        <div>
+                                            <div class="flex justify-between font-bold text-slate-800 mb-1">
+                                                <span>역사적 가치</span>
+                                                <span id="val-stat1" class="text-orange-600">50</span>
+                                            </div>
+                                            <input type="range" id="stat1" min="0" max="100" value="50" oninput="updateStats(); openReason('reason1')">
+                                            <p class="text-sm text-slate-500 font-medium mt-1">언제 만들어졌고 어떤 이야기가 담겨 있나요?</p>
+                                            <div id="reason1" class="reason-box">
+                                                <textarea rows="2" placeholder="역사적으로 중요한 이유를 써보세요." class="w-full bg-white border-2 border-orange-300 rounded-lg p-2 text-sm font-medium focus:outline-none focus:border-orange-500 resize-none" oninput="updateReasonPreview(1, this.value)"></textarea>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between font-bold text-slate-800 mb-1">
+                                                <span>과학적 가치</span>
+                                                <span id="val-stat2" class="text-orange-600">50</span>
+                                            </div>
+                                            <input type="range" id="stat2" min="0" max="100" value="50" oninput="updateStats(); openReason('reason2')">
+                                            <p class="text-sm text-slate-500 font-medium mt-1">어떤 우수한 기술이나 원리가 숨어 있나요?</p>
+                                            <div id="reason2" class="reason-box">
+                                                <textarea rows="2" placeholder="과학적으로 뛰어난 점을 써보세요." class="w-full bg-white border-2 border-blue-300 rounded-lg p-2 text-sm font-medium focus:outline-none focus:border-blue-500 resize-none" oninput="updateReasonPreview(2, this.value)"></textarea>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between font-bold text-slate-800 mb-1">
+                                                <span>예술·심미적 가치</span>
+                                                <span id="val-stat3" class="text-orange-600">50</span>
+                                            </div>
+                                            <input type="range" id="stat3" min="0" max="100" value="50" oninput="updateStats(); openReason('reason3')">
+                                            <p class="text-sm text-slate-500 font-medium mt-1">모양이나 색깔이 얼마나 아름다운가요?</p>
+                                            <div id="reason3" class="reason-box">
+                                                <textarea rows="2" placeholder="예술적으로 아름다운 점을 써보세요." class="w-full bg-white border-2 border-green-300 rounded-lg p-2 text-sm font-medium focus:outline-none focus:border-green-500 resize-none" oninput="updateReasonPreview(3, this.value)"></textarea>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between font-bold text-slate-800 mb-1">
+                                                <span>생태적 가치</span>
+                                                <span id="val-stat4" class="text-orange-600">50</span>
+                                            </div>
+                                            <input type="range" id="stat4" min="0" max="100" value="50" oninput="updateStats(); openReason('reason4')">
+                                            <p class="text-sm text-slate-500 font-medium mt-1">자연이나 주변 환경과 어떻게 어울리나요?</p>
+                                            <div id="reason4" class="reason-box">
+                                                <textarea rows="2" placeholder="자연과 어우러진 점을 써보세요." class="w-full bg-white border-2 border-teal-300 rounded-lg p-2 text-sm font-medium focus:outline-none focus:border-teal-500 resize-none" oninput="updateReasonPreview(4, this.value)"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div onmouseenter="setTip('desc')">
+                                    <label class="block text-lg font-bold text-slate-700 mb-2">나만의 소개글</label>
+                                    <textarea id="inputDesc" rows="4" placeholder="아래 블록을 눌러 문장을 완성해보세요! 조사한 내용을 친구에게 소개하듯 적어요." class="w-full bg-white border-3 border-slate-900 p-3 rounded-xl text-lg font-medium focus:bg-orange-50 outline-none resize-none mb-3" onfocus="setTip('desc')"></textarea>
+                                    <div class="bg-slate-100 p-3 rounded-lg border-2 border-slate-300">
+                                        <p class="text-sm font-bold text-slate-500 mb-2">교과서 문장 블록 (클릭)</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button class="keyword-chip" onclick="addKeyword('우리 지역의 국가유산은')">우리 지역의 국가유산은</button>
+                                            <button class="keyword-chip" onclick="addKeyword('과학적 가치')">과학적 가치</button>
+                                            <button class="keyword-chip" onclick="addKeyword('문화유산')">문화유산</button>
+                                            <button class="keyword-chip" onclick="addKeyword('무형유산')">무형유산</button>
+                                            <button class="keyword-chip" onclick="addKeyword('소중히 여겨야 합니다.')">소중히 여겨야 합니다.</button>
+                                            <button class="keyword-chip" onclick="addKeyword('자랑스러운')">자랑스러운</button>
+                                            <button class="keyword-chip" onclick="addKeyword('자연과의 조화')">자연과의 조화</button>
+                                            <button class="keyword-chip" onclick="addKeyword('전해져 내려오는')">전해져 내려오는</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="completeBtn" onclick="completeItem()" class="w-full py-2.5 bg-orange-500 border-3 border-slate-900 rounded-xl font-black text-lg text-white shadow-[4px_4px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">작성 완료 (도장 쾅!)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:flex-1 md:min-w-0 h-full flex flex-col items-center justify-center bg-orange-50 border-3 border-slate-900 rounded-2xl relative overflow-hidden p-4" style="background-image: radial-gradient(#fdba74 1px, transparent 1px); background-size: 20px 20px;">
+                        
+                        <!-- 예시 버튼 추가 -->
+                        <button onclick="showExample()" class="mb-4 bg-green-400 hover:bg-green-300 border-3 border-slate-900 rounded-xl px-6 py-2 font-bold shadow-[4px_4px_0px_#0f172a] active:translate-y-1 active:shadow-none transition flex items-center gap-2 cursor-pointer z-20">
+                            <span class="font-jua text-xl">소개 예시 보기</span>
+                        </button>
+
+                        <div class="absolute left-4 top-10 w-4 h-12 bg-gray-400 rounded-full border-2 border-slate-600 shadow-md"></div>
+                        <div class="absolute left-4 bottom-10 w-4 h-12 bg-gray-400 rounded-full border-2 border-slate-600 shadow-md"></div>
+                        <!-- 카드 영역 (패널 크기에 맞춤) -->
+                        <div id="cardArea" class="bg-white w-[440px] h-[280px] border-4 border-slate-900 rounded-2xl p-4 flex gap-4 shadow-2xl relative">
+                            <!-- 왼쪽: 이미지 영역 -->
+                            <div class="w-1/3 flex flex-col justify-center">
+                                <div class="w-full aspect-[3/4] bg-orange-50 border-3 border-slate-900 rounded-xl overflow-hidden flex items-center justify-center relative shadow-sm">
+                                    <img id="viewImage" src="" class="w-full h-full object-cover hidden">
+                                    <span id="imgPlaceholder" class="text-sm font-bold text-slate-400 text-center px-1">사진을<br>넣어요</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 오른쪽: 정보 영역 -->
+                            <div class="flex-1 flex flex-col justify-between">
+                                <!-- 헤더 -->
+                                <div class="flex justify-between items-start border-b-2 border-slate-900 pb-1 mb-1">
+                                    <h3 id="viewName" class="text-2xl font-black font-jua text-slate-900 leading-tight pr-2 break-keep">이름 없음</h3>
+                                    <div class="bg-yellow-400 text-slate-900 text-xs font-bold px-2 py-0.5 border-2 border-slate-900 rounded-lg shadow-[2px_2px_0px_rgba(0,0,0,0.2)] shrink-0">RARE</div>
+                                </div>
+
+                                <!-- 스탯 -->
+                                <div class="space-y-1 mb-1">
+                                    <div class="flex items-center gap-2 text-xs font-bold">
+                                        <span class="w-8 text-right">역사</span>
+                                        <div class="flex-1 h-3.5 bg-slate-200 border border-slate-900 rounded-full overflow-hidden">
+                                            <div id="bar1" class="h-full bg-red-400" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <p id="view-reason1" class="hidden text-[9px] italic text-red-400 pl-10 leading-tight break-keep"></p>
+                                    <div class="flex items-center gap-2 text-xs font-bold">
+                                        <span class="w-8 text-right">과학</span>
+                                        <div class="flex-1 h-3.5 bg-slate-200 border border-slate-900 rounded-full overflow-hidden">
+                                            <div id="bar2" class="h-full bg-blue-400" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <p id="view-reason2" class="hidden text-[9px] italic text-blue-400 pl-10 leading-tight break-keep"></p>
+                                    <div class="flex items-center gap-2 text-xs font-bold">
+                                        <span class="w-8 text-right">예술</span>
+                                        <div class="flex-1 h-3.5 bg-slate-200 border border-slate-900 rounded-full overflow-hidden">
+                                            <div id="bar3" class="h-full bg-green-400" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <p id="view-reason3" class="hidden text-[9px] italic text-green-400 pl-10 leading-tight break-keep"></p>
+                                    <div class="flex items-center gap-2 text-xs font-bold">
+                                        <span class="w-8 text-right">생태</span>
+                                        <div class="flex-1 h-3.5 bg-slate-200 border border-slate-900 rounded-full overflow-hidden">
+                                            <div id="bar4" class="h-full bg-teal-400" style="width: 50%"></div>
+                                        </div>
+                                    </div>
+                                    <p id="view-reason4" class="hidden text-[9px] italic text-teal-500 pl-10 leading-tight break-keep"></p>
+                                </div>
+
+                                <!-- 설명 -->
+                                <div class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-xl p-2 relative flex items-center overflow-y-auto custom-scroll">
+                                     <div class="absolute -top-1 -left-1 text-xl text-slate-400 pointer-events-none">❝</div>
+                                     <p id="viewDesc" class="text-xs font-bold text-slate-700 break-keep leading-snug px-2 w-full">여기에 내용이 들어갑니다.</p>
+                                     <div class="absolute -bottom-2 -right-1 text-xl text-slate-400 rotate-180 pointer-events-none">❝</div>
+                                </div>
+                                
+                                <!-- 푸터 -->
+                                <div class="text-right mt-1">
+                                     <span class="text-xs font-bold text-slate-400">초등학교 4학년 사회 - 우리 지역의 국가유산</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. 결과 화면 (좌우 2단 레이아웃) -->
+                <section id="scene-result" class="hidden h-full flex flex-col p-4 overflow-hidden">
+                    <div class="shrink-0 text-center mb-4">
+                        <h2 class="text-4xl font-black font-jua text-slate-900 mb-1">활동 완료!</h2>
+                        <p class="text-lg font-bold text-slate-500">내가 만든 국가유산 카드를 확인해보세요.</p>
+                    </div>
+                    
+                    <div class="flex-1 flex flex-col md:flex-row gap-6 w-full max-w-6xl mx-auto overflow-hidden">
+                        <!-- 왼쪽: 카드 리스트 -->
+                        <div class="flex-1 overflow-y-auto custom-scroll p-2">
+                            <div id="resultGrid" class="flex flex-col items-center gap-6"></div>
+                        </div>
+
+                        <!-- 오른쪽: 평가 패널 -->
+                        <div class="w-full md:w-1/3 shrink-0 flex flex-col gap-4">
+                            <div class="bg-white border-3 border-slate-900 p-6 rounded-2xl text-center shadow-[8px_8px_0px_rgba(0,0,0,0.1)]">
+                                <h3 class="text-xl font-bold mb-4">스스로 평가해보기</h3>
+                                <div class="flex flex-col gap-3">
+                                    <button id="eval-good" onclick="finishLearning('good')" class="border-3 border-slate-900 bg-green-100 hover:bg-green-200 rounded-xl p-4 transition hover:-translate-y-1 flex items-center justify-center gap-3">
+                                        <div class="font-bold text-slate-900 text-lg">완벽하게 이해했어!</div>
+                                    </button>
+                                    <button id="eval-soso" onclick="finishLearning('soso')" class="border-3 border-slate-900 bg-yellow-100 hover:bg-yellow-200 rounded-xl p-4 transition hover:-translate-y-1 flex items-center justify-center gap-3">
+                                        <div class="font-bold text-slate-900 text-lg">조금 더 공부할래</div>
+                                    </button>
+                                </div>
+                            </div>
+                            <p id="eval-guide" class="text-center text-sm font-bold text-orange-500">먼저 스스로 평가를 해주세요!</p>
+                            <button id="btn-result-main" onclick="goToMain()" disabled class="w-full bg-slate-200 border-3 border-slate-400 rounded-xl p-4 font-bold text-slate-400 cursor-not-allowed transition shadow-md">메인으로 돌아가기
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+            </div> <!-- /.relative w-full h-full flex -->
+        </div> <!-- /#scale-wrapper -->
+    </div> <!-- /#scale-container -->
+
+    <!-- 모달: 가이드 -->
+    <div id="conceptModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-[60]">
+        <div class="bg-yellow-100 w-full max-w-5xl border-8 border-slate-900 rounded-2xl p-8 pt-6 relative shadow-2xl modal-pop">
+            <div class="flex items-center justify-between mb-4 border-b-4 border-slate-900 pb-3">
+                <h3 class="text-4xl font-black font-jua text-slate-900">국가유산 개념 가이드</h3>
+                <button onclick="closeConceptModal()" class="bg-red-500 text-white w-14 h-14 rounded-full border-4 border-slate-900 font-black text-3xl hover:scale-110 transition shrink-0 shadow-[2px_2px_0px_#0f172a]">✕</button>
+            </div>
+            <div class="space-y-5 font-bold text-slate-800">
+                <div class="bg-white/60 p-5 rounded-2xl border-4 border-slate-400/40">
+                    <span class="text-slate-900 font-black block mb-2 border-b-2 border-slate-300 pb-2 text-2xl">국가유산이란?</span>
+                    <p class="text-2xl leading-relaxed break-keep font-medium text-slate-700">우리 지역에는 옛날 사람들이 어떻게 살았는지 알 수 있는 생활 도구, 생활 방식, 건물, 음악이나 춤 등이 남아 있습니다. 그중에서 후손들에게 물려줄 만한 가치가 있는 것을 <span class="bg-yellow-300 px-2 rounded font-bold text-slate-900">국가유산</span>이라고 합니다.
+                    </p>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white/60 p-4 rounded-2xl border-4 border-red-300">
+                        <span class="bg-red-400 text-white px-3 py-1.5 rounded-lg border-3 border-slate-900 text-xl inline-block mb-2">문화유산</span>
+                        <p class="text-xl leading-relaxed break-keep">건축물, 공예품, 책처럼 <span class="bg-red-200 px-1">형태가 있는</span> 국가유산이에요.</p>
+                    </div>
+                    <div class="bg-white/60 p-4 rounded-2xl border-4 border-blue-300">
+                        <span class="bg-blue-400 text-white px-3 py-1.5 rounded-lg border-3 border-slate-900 text-xl inline-block mb-2">무형유산</span>
+                        <p class="text-xl leading-relaxed break-keep">아리랑, 탈춤처럼 <span class="bg-blue-200 px-1">형태는 없지만</span> 예술 활동이나 기술이에요.</p>
+                    </div>
+                    <div class="bg-white/60 p-4 rounded-2xl border-4 border-green-300">
+                        <span class="bg-green-400 text-white px-3 py-1.5 rounded-lg border-3 border-slate-900 text-xl inline-block mb-2">유산의 가치</span>
+                        <p class="text-xl leading-relaxed break-keep">역사적, 과학적, 예술적, 생태적 가치를 지닌 소중한 보물이에요.</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeConceptModal()" class="w-full mt-6 bg-slate-900 text-white py-4 rounded-xl font-black text-3xl hover:bg-slate-700 transition">확인했어요!</button>
+        </div>
+    </div>
+
+    <!-- 모달: 알림 -->
+    <div id="msgModal" class="fixed inset-0 bg-slate-900/50 hidden flex items-center justify-center p-4 z-[100]">
+        <div class="bg-white w-full max-w-sm border-4 border-slate-900 rounded-2xl p-6 relative shadow-2xl modal-pop">
+            <h3 id="msgTitle" class="text-2xl font-black font-jua text-slate-900 mb-2">알림</h3>
+            <p id="msgBody" class="text-lg font-bold text-slate-600 mb-6 break-keep text-center">내용</p>
+            <button onclick="closeMsgModal()" class="w-full bg-orange-500 border-3 border-slate-900 rounded-xl font-black text-lg text-white py-3 shadow-[4px_4px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">확인</button>
+        </div>
+    </div>
+
+    <script>
+        // 전역 상태
+        let state = { 
+            studentId: '', 
+            studentName: '', 
+            uploadedImage: '',   // 서버 전송용 압축 Base64
+            totalItems: 0, 
+            currentItem: 0, 
+            results: [],         // html2canvas로 캡처한 완성 카드 (학생 다운로드용)
+            progressLevel: 0 
+        };
+
+        // ================================
+        // 실행 모드 판별 (GAS / 연동 / 데모)
+        // ================================
+        const APP_ID = 'ngh'; // 앱 식별자 (로컬 저장 키에 사용)
+        const CONNECT_KEY = APP_ID + '_exec_url'; // 연동 주소 저장 키
+
+        let RUN_MODE = 'demo';   // 'gas' | 'linked' | 'demo'
+        let EXEC_URL = '';       // 연동 모드에서 사용할 선생님 웹앱 주소
+        let SHOW_SETTINGS = true; // 설정(선생님 메뉴) 버튼 표시 여부
+
+        (function detectMode() {
+            // 1) GAS 모드: google.script.run 사용 가능
+            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                RUN_MODE = 'gas';
+                SHOW_SETTINGS = false; // 시트에서 직접 실행한 화면엔 설정 불필요
+                return;
+            }
+            // 2) 연동 모드: 링크(#c=주소) 또는 저장된 주소
+            const hash = window.location.hash || '';
+            const m = hash.match(/#c=(.+)$/);
+            if (m && m[1]) {
+                EXEC_URL = decodeURIComponent(m[1]);
+                RUN_MODE = 'linked';
+                SHOW_SETTINGS = false; // 학생용 링크로 들어온 화면엔 설정 숨김
+                return;
+            }
+            const saved = localStorage.getItem(CONNECT_KEY);
+            if (saved) {
+                EXEC_URL = saved;
+                RUN_MODE = 'linked';
+                SHOW_SETTINGS = true; // 선생님이 주소 입력해 들어온 화면
+                return;
+            }
+            // 3) 데모 모드
+            RUN_MODE = 'demo';
+            SHOW_SETTINGS = true;
+        })();
+
+        // 연동 모드 요청 (다른 주소의 웹앱 호출)
+        // 학생이 이유를 길게 쓰면 주소 길이 제한에 걸릴 수 있어,
+        // 그럴 때는 주소에 싣지 않고 본문으로 보낸다.
+        function jsonpRequest(baseUrl, params, onSuccess, onError) {
+            const _qsLen = Object.keys(params)
+                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+                .join('&').length;
+            if (_qsLen > 6000 && typeof fetch === 'function') {
+                const body = { action: params.action };
+                if (params.data) {
+                    try { body.data = JSON.parse(params.data); } catch (e) { body.data = params.data; }
+                }
+                fetch(baseUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(body)
+                })
+                .then(r => r.json())
+                .then(onSuccess)
+                .catch(err => { if (onError) onError(err); });
+                return;
+            }
+
+            const cbName = 'ngh_cb_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+            const timeoutMs = 12000;
+            let done = false;
+
+            const cleanup = () => {
+                delete window[cbName];
+                if (script.parentNode) script.parentNode.removeChild(script);
+                clearTimeout(timer);
+            };
+            window[cbName] = (res) => {
+                if (done) return;
+                done = true;
+                cleanup();
+                onSuccess(res);
+            };
+            const qs = Object.keys(params)
+                .map(k => encodeURIComponent(k) + '=' + encodeURIComponent(params[k]))
+                .join('&');
+            const sep = baseUrl.indexOf('?') >= 0 ? '&' : '?';
+            const script = document.createElement('script');
+            script.src = baseUrl + sep + qs + '&callback=' + cbName;
+            script.onerror = () => {
+                if (done) return;
+                done = true;
+                cleanup();
+                if (onError) onError(new Error('네트워크 오류'));
+            };
+            const timer = setTimeout(() => {
+                if (done) return;
+                done = true;
+                cleanup();
+                if (onError) onError(new Error('시간 초과'));
+            }, timeoutMs);
+            document.body.appendChild(script);
+        }
+
+        // 모드별 명단 조회
+        function fetchStudentList(onDone) {
+            if (RUN_MODE === 'gas') {
+                google.script.run
+                    .withSuccessHandler(res => onDone(res && res.success ? res.students : demoStudents()))
+                    .withFailureHandler(() => onDone(demoStudents()))
+                    .getStudentList();
+            } else if (RUN_MODE === 'linked') {
+                jsonpRequest(EXEC_URL, { action: 'list' },
+                    res => {
+                        if (res && res.success && res.students && res.students.length) {
+                            onDone(res.students);
+                            return;
+                        }
+                        // 우리 반 명단을 못 받아온 상태.
+                        // 학생용 링크로 들어온 화면이면 체험 명단으로 슬쩍 바꾸지 않는다.
+                        // 그대로 두면 학생이 모른 채 활동하고 작품이 저장되지 않는다.
+                        if (!SHOW_SETTINGS) { showConnectFail(); return; }
+                        onDone(demoStudents());
+                    },
+                    () => {
+                        if (!SHOW_SETTINGS) { showConnectFail(); return; }
+                        onDone(demoStudents());
+                    });
+            } else {
+                onDone(demoStudents());
+            }
+        }
+
+        // 우리 반 시트에 닿지 못했을 때: 분명히 알리고 멈춘다.
+        function showConnectFail() {
+            if (document.getElementById('__connectFail')) return;
+            const box = document.createElement('div');
+            box.id = '__connectFail';
+            box.style.cssText = 'position:fixed;inset:0;z-index:2147483600;background:#fff;display:flex;' +
+                'align-items:center;justify-content:center;padding:24px;font-family:inherit;';
+            box.innerHTML =
+                '<div style="max-width:420px;text-align:center;">' +
+                '<div style="font-size:52px;margin-bottom:12px;">😢</div>' +
+                '<div style="font-size:20px;font-weight:800;color:#b45309;margin-bottom:10px;">우리 반 시트에 연결하지 못했어요</div>' +
+                '<div style="font-size:14px;line-height:1.7;color:#57534e;margin-bottom:18px;">' +
+                '인터넷 연결을 확인하고 다시 시도해 주세요.<br>계속 안 되면 선생님께 알려 주세요.</div>' +
+                '<button type="button" id="__connectRetry" style="background:#0ea5e9;color:#fff;border:0;' +
+                'border-radius:12px;padding:12px 24px;font-size:16px;font-weight:700;cursor:pointer;">다시 시도하기</button>' +
+                '</div>';
+            document.body.appendChild(box);
+            const btn = document.getElementById('__connectRetry');
+            if (btn) btn.onclick = function () { window.location.reload(); };
+        }
+
+        // 모드별 카드 제출
+        function submitCard(baseData, onDone, onFail) {
+            if (RUN_MODE === 'gas') {
+                google.script.run
+                    .withSuccessHandler(() => onDone && onDone())
+                    .withFailureHandler(err => onFail && onFail(err))
+                    .submitHeritage(baseData);
+            } else if (RUN_MODE === 'linked') {
+                jsonpRequest(EXEC_URL, { action: 'submit', data: JSON.stringify(baseData) },
+                    () => onDone && onDone(),
+                    err => onFail && onFail(err));
+            } else {
+                // 데모 모드: 시트 저장 안 함, 안내만
+                showCustomAlert("체험 모드예요", "선생님이 구글 시트를 연결하면\n작품이 저장돼요.");
+                if (onDone) onDone(); // 카드 다운로드 등 이후 흐름은 계속
+            }
+        }
+
+        // ================================
+        // 로그인 로직
+        // ================================
+        // ================================
+        // 선생님 메뉴 (설정) — 연동 주소 관리
+        // ================================
+        function initSettingsUI() {
+            const wrap = document.getElementById('teacher-menu-wrap');
+            if (!wrap) return;
+            if (SHOW_SETTINGS) {
+                wrap.classList.remove('hidden');
+                // 이미 연결된 주소가 있으면 표시
+                if (RUN_MODE === 'linked' && EXEC_URL) {
+                    document.getElementById('execUrlInput').value = EXEC_URL;
+                    renderStudentLink();
+                    document.getElementById('connected-info').classList.remove('hidden');
+                }
+            } else {
+                // 학생용 링크 접속 또는 GAS 모드: 선생님 메뉴 자체를 DOM에서 제거
+                wrap.remove();
+            }
+        }
+
+        function toggleSettings() {
+            document.getElementById('settings-panel').classList.toggle('hidden');
+        }
+
+        function connectSheet() {
+            const url = document.getElementById('execUrlInput').value.trim();
+            const status = document.getElementById('connect-status');
+            status.classList.remove('hidden', 'text-red-500', 'text-green-600');
+
+            if (!/^https:\/\/script\.google\.com\/.+\/exec/.test(url)) {
+                status.innerText = '주소 형식이 올바르지 않아요. (.../exec 로 끝나야 해요)';
+                status.classList.add('text-red-500');
+                return;
+            }
+
+            status.innerText = '연결 중...';
+            status.classList.add('text-slate-500');
+
+            // 저장하고 즉시 연동 모드로 전환
+            localStorage.setItem(CONNECT_KEY, url);
+            EXEC_URL = url;
+            RUN_MODE = 'linked';
+
+            // 새로고침 없이 명단 다시 불러오기
+            fetchStudentList(function(students) {
+                const sel = document.getElementById('selectStudent');
+                sel.innerHTML = '<option value="">먼저 이름을 골라요</option>';
+                students.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.number; opt.dataset.name = s.name; opt.textContent = s.name;
+                    sel.appendChild(opt);
+                });
+                status.innerText = '연결됐어요! 명단을 불러왔습니다.';
+                status.classList.remove('text-slate-500');
+                status.classList.add('text-green-600');
+                renderStudentLink();
+                document.getElementById('connected-info').classList.remove('hidden');
+            });
+        }
+
+        function renderStudentLink() {
+            const base = window.location.origin + window.location.pathname;
+            const link = base + '#c=' + encodeURIComponent(EXEC_URL);
+            document.getElementById('studentLinkInput').value = link;
+            document.getElementById('student-link-box').classList.remove('hidden');
+        }
+
+        function copyStudentLink() {
+            const input = document.getElementById('studentLinkInput');
+            input.select();
+            try {
+                navigator.clipboard.writeText(input.value);
+                showCustomAlert("복사 완료", "학생용 주소를 복사했어요.\n학생들에게 공유하세요.");
+            } catch (e) {
+                document.execCommand('copy');
+                showCustomAlert("복사 완료", "학생용 주소를 복사했어요.");
+            }
+        }
+
+        function disconnectSheet() {
+            localStorage.removeItem(CONNECT_KEY);
+            EXEC_URL = '';
+            RUN_MODE = 'demo';
+            document.getElementById('execUrlInput').value = '';
+            document.getElementById('student-link-box').classList.add('hidden');
+            document.getElementById('connected-info').classList.add('hidden');
+            const status = document.getElementById('connect-status');
+            status.innerText = '연결을 해제했어요. (체험 모드)';
+            status.classList.remove('hidden', 'text-green-600');
+            status.classList.add('text-slate-500');
+            loadStudentDropdown(); // 데모 명단으로 복귀
+        }
+
+        // 드롭다운 채우기 (모드별 명단)
+        function loadStudentDropdown() {
+            const sel = document.getElementById('selectStudent');
+            const fillOptions = (students) => {
+                sel.innerHTML = '<option value="">먼저 이름을 골라요</option>';
+                students.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.number;
+                    opt.dataset.name = s.name;
+                    opt.textContent = s.name;
+                    sel.appendChild(opt);
+                });
+            };
+            fetchStudentList(fillOptions);
+        }
+
+        // 데모용 학생1~30
+        function demoStudents() {
+            const arr = [];
+            for (let i = 1; i <= 30; i++) arr.push({ number: String(i), name: '학생' + i });
+            return arr;
+        }
+
+        function checkStudentId() {
+            const sel = document.getElementById('selectStudent');
+            const errorEl = document.getElementById('login-error');
+            errorEl.classList.add('hidden');
+
+            if (!sel.value) {
+                errorEl.innerText = "이름을 선택해주세요.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const opt = sel.options[sel.selectedIndex];
+            state.studentId = sel.value;                 // 번호
+            state.studentName = opt.dataset.name || opt.textContent;
+
+            document.getElementById('confirmStudentName').innerText = state.studentName;
+            document.getElementById('login-step1').classList.add('hidden');
+            document.getElementById('login-step2').classList.remove('hidden');
+        }
+
+        function backToStep1() {
+            document.getElementById('login-step2').classList.add('hidden');
+            document.getElementById('login-step1').classList.remove('hidden');
+            document.getElementById('selectStudent').value = '';
+            state.studentId = '';
+            state.studentName = '';
+        }
+
+        function confirmLogin() {
+            document.getElementById('scene-login').classList.add('hidden');
+            document.getElementById('studentBadge').classList.remove('hidden');
+            document.getElementById('displayStudentName').innerText = state.studentName;
+            // 로그인 후 이전 임시저장 확인
+            checkLocalDraft();
+        }
+
+        // ================================
+        // localStorage 임시저장 (번호별 분리)
+        // ================================
+        const DRAFT_KEY = () => `ngh_draft_${state.studentId}`;
+        let draftSaveTimer = null;
+
+        function saveLocalDraft() {
+            if (!state.studentId) return;
+            try {
+                const draft = {
+                    savedAt: new Date().toISOString(),
+                    progressLevel: state.progressLevel,
+                    totalItems: state.totalItems,
+                    currentItem: state.currentItem,
+                    inputName: document.getElementById('inputName')?.value || '',
+                    inputDesc: document.getElementById('inputDesc')?.value || '',
+                    stat1: document.getElementById('stat1')?.value || 50,
+                    stat2: document.getElementById('stat2')?.value || 50,
+                    stat3: document.getElementById('stat3')?.value || 50,
+                    stat4: document.getElementById('stat4')?.value || 50,
+                    reason1: document.getElementById('reason1')?.querySelector('textarea')?.value || '',
+                    reason2: document.getElementById('reason2')?.querySelector('textarea')?.value || '',
+                    reason3: document.getElementById('reason3')?.querySelector('textarea')?.value || '',
+                    reason4: document.getElementById('reason4')?.querySelector('textarea')?.value || '',
+                    // 이미지는 용량 문제로 제외 (재업로드 필요 안내)
+                };
+                localStorage.setItem(DRAFT_KEY(), JSON.stringify(draft));
+            } catch(e) {
+                console.warn('임시저장 실패:', e);
+            }
+        }
+
+        // debounce: 입력 후 1초 뒤 저장
+        function scheduleDraftSave() {
+            clearTimeout(draftSaveTimer);
+            draftSaveTimer = setTimeout(saveLocalDraft, 1000);
+        }
+
+        function clearLocalDraft() {
+            try { localStorage.removeItem(DRAFT_KEY()); } catch(e) {}
+        }
+
+        function checkLocalDraft() {
+            try {
+                const raw = localStorage.getItem(DRAFT_KEY());
+                if (!raw) return;
+                const draft = JSON.parse(raw);
+                if (!draft.inputName && !draft.inputDesc) { clearLocalDraft(); return; }
+
+                const savedAt = new Date(draft.savedAt);
+                const timeStr = savedAt.toLocaleString('ko-KR', { month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                // 복원 여부 확인 알림
+                showDraftRestoreModal(draft, timeStr);
+            } catch(e) {
+                clearLocalDraft();
+            }
+        }
+
+        function showDraftRestoreModal(draft, timeStr) {
+            // 기존 모달 활용
+            document.getElementById('msgTitle').innerText = '이전 작업이 있어요!';
+            document.getElementById('msgBody').innerText = `${timeStr}에 작성하던 내용이 남아 있어요.\n"${draft.inputName || '(이름 없음)'}"이어서 할까요?`;
+
+            // 버튼을 "이어하기 / 새로 시작"두 개로 교체
+            const modal = document.getElementById('msgModal');
+            const originalBtn = modal.querySelector('button');
+            originalBtn.classList.add('hidden');
+
+            const btnRow = document.createElement('div');
+            btnRow.id = 'draftBtnRow';
+            btnRow.className = 'flex gap-3';
+            btnRow.innerHTML = `
+                <button onclick="discardDraft()" class="flex-1 bg-slate-300 border-3 border-slate-500 rounded-xl font-black text-lg text-slate-700 py-3 hover:bg-slate-200 transition">새로 시작</button>
+                <button onclick="restoreDraft()" class="flex-1 bg-orange-500 border-3 border-slate-900 rounded-xl font-black text-lg text-white py-3 shadow-[3px_3px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition">이어하기 </button>
+            `;
+            modal.querySelector('.bg-white').appendChild(btnRow);
+            modal.classList.remove('hidden');
+        }
+
+        function closeDraftModal() {
+            const modal = document.getElementById('msgModal');
+            modal.classList.add('hidden');
+            const btnRow = document.getElementById('draftBtnRow');
+            if (btnRow) btnRow.remove();
+            modal.querySelector('button').classList.remove('hidden');
+        }
+
+        function discardDraft() {
+            clearLocalDraft();
+            closeDraftModal();
+        }
+
+        function restoreDraft() {
+            try {
+                const draft = JSON.parse(localStorage.getItem(DRAFT_KEY()));
+                closeDraftModal();
+
+                // 활동 화면까지 진행 상태 복원
+                state.progressLevel = draft.progressLevel || 0;
+                updateMainUI();
+
+                if (draft.totalItems >0) {
+                    startGame(draft.totalItems);
+                    // 현재 항목 인덱스 복원
+                    state.currentItem = draft.currentItem || 1;
+                    updateProgress();
+
+                    // 입력값 복원
+                    setTimeout(() => {
+                        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+                        setVal('inputName', draft.inputName);
+                        document.getElementById('viewName').innerText = draft.inputName || '이름 없음';
+                        setVal('inputDesc', draft.inputDesc);
+                        document.getElementById('viewDesc').innerText = draft.inputDesc || '내용을 입력하세요.';
+                        setVal('stat1', draft.stat1); setVal('stat2', draft.stat2); setVal('stat3', draft.stat3); setVal('stat4', draft.stat4);
+                        updateStats();
+                        if (draft.reason1) { document.getElementById('reason1').querySelector('textarea').value = draft.reason1; updateReasonPreview(1, draft.reason1); }
+                        if (draft.reason2) { document.getElementById('reason2').querySelector('textarea').value = draft.reason2; updateReasonPreview(2, draft.reason2); }
+                        if (draft.reason3) { document.getElementById('reason3').querySelector('textarea').value = draft.reason3; updateReasonPreview(3, draft.reason3); }
+                        if (draft.reason4) { document.getElementById('reason4').querySelector('textarea').value = draft.reason4; updateReasonPreview(4, draft.reason4); }
+
+                        showCustomAlert("복원 완료!", "이전 내용을 불러왔어요.\n사진은 다시 붙여주세요.");
+                    }, 200);
+                }
+            } catch(e) {
+                clearLocalDraft();
+                closeDraftModal();
+            }
+        }
+
+        // ================================
+        // 이미지 리사이즈 + 압축 (셀 안전 한도 내로)
+        // ================================
+        function compressImage(imgSrc, maxWidth, quality) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    let w = img.width, h = img.height;
+                    if (w >maxWidth) { h = h * maxWidth / w; w = maxWidth; }
+                    canvas.width = w; canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = reject;
+                img.src = imgSrc;
+            });
+        }
+
+        async function processUploadedImage(originalDataUrl) {
+            // 시트 셀 안전 한도: 45,000자 (실제 제한 50,000)
+            const MAX_LEN = 45000;
+            let result = await compressImage(originalDataUrl, 600, 0.7);
+            if (result.length >MAX_LEN) result = await compressImage(originalDataUrl, 500, 0.6);
+            if (result.length >MAX_LEN) result = await compressImage(originalDataUrl, 400, 0.5);
+            if (result.length >MAX_LEN) result = await compressImage(originalDataUrl, 300, 0.4);
+            return result;
+        }
+
+        // 유틸 함수
+        function showCustomAlert(title, msg) {
+            document.getElementById('msgTitle').innerText = title;
+            document.getElementById('msgBody').innerText = msg;
+            document.getElementById('msgModal').classList.remove('hidden');
+        }
+        function closeMsgModal() {
+            document.getElementById('msgModal').classList.add('hidden');
+        }
+        function openConceptModal() { document.getElementById('conceptModal').classList.remove('hidden'); }
+        function closeConceptModal() { document.getElementById('conceptModal').classList.add('hidden'); }
+
+        // 화면 이동 로직
+        function hideAllScenes() {
+            const scenes = ['scene-main', 'scene-concept', 'scene-quiz', 'scene-goal', 'scene-activity', 'scene-result'];
+            scenes.forEach(id =>document.getElementById(id).classList.add('hidden'));
+            document.getElementById('progressArea').classList.add('hidden');
+        }
+        function setActiveTab(scene) {
+            document.querySelectorAll('.index-tab').forEach(tab => {
+                if (tab.getAttribute('data-scene') === scene) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+        function goToMain() {
+            hideAllScenes();
+            document.getElementById('scene-main').classList.remove('hidden');
+            setActiveTab('main');
+            updateMainUI();
+        }
+        function checkTabAccess(step) {
+            if(step === 'quiz' && state.progressLevel < 1) { showCustomAlert("잠깐!", "개념을 먼저 익혀주세요."); return; }
+            if(step === 'goal' && state.progressLevel < 2) { showCustomAlert("잠깐!", "퀴즈를 먼저 풀어주세요."); return; }
+            if(step === 'result' && state.progressLevel < 3) { showCustomAlert("잠깐!", "활동을 먼저 완료해주세요."); return; }
+            goToStep(step);
+        }
+        function goToStep(step) {
+            hideAllScenes();
+            setActiveTab(step);
+            if(step === 'concept') {
+                document.getElementById('scene-concept').classList.remove('hidden');
+                prevConcept(); 
+            } else if(step === 'quiz') {
+                document.getElementById('scene-quiz').classList.remove('hidden');
+                resetQuiz();
+            } else if(step === 'goal') {
+                document.getElementById('scene-goal').classList.remove('hidden');
+            } else if(step === 'result') {
+                document.getElementById('scene-result').classList.remove('hidden');
+                showResult();
+            }
+        }
+        function updateMainUI() {
+            const level = state.progressLevel;
+            const updateCard = (stepNum, isUnlocked, isCompleted) => {
+                const card = document.getElementById(`card-step${stepNum}`);
+                const badge = document.getElementById(`badge-step${stepNum}`);
+                if (isUnlocked) {
+                    card.classList.remove('disabled');
+                    if (isCompleted) {
+                        card.classList.add('completed');
+                        badge.innerText = "완료됨";
+                        badge.className = "bg-green-500 text-white font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-900 shadow-sm";
+                    } else {
+                        card.classList.remove('completed');
+                        badge.innerText = "입장하기";
+                        badge.className = "bg-yellow-400 text-slate-900 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-900 shadow-sm";
+                    }
+                } else {
+                    card.classList.add('disabled');
+                    badge.innerText = "잠김";
+                    badge.className = "bg-slate-200 text-slate-500 font-bold px-4 py-2 rounded-full text-sm border-2 border-slate-300";
+                }
+            };
+            updateCard(1, true, level >= 1);
+            updateCard(2, level >= 1, level >= 2);
+            updateCard(3, level >= 2, level >= 3);
+            updateCard(4, level >= 3, level >= 4);
+        }
+
+        // 개념 학습
+        // 1단계는 4개의 슬라이드로 구성됨
+        let currentSlide = 1;
+        const TOTAL_SLIDES = 7;
+
+        function showSlide(n) {
+            currentSlide = n;
+            // 슬라이드 표시
+            document.querySelectorAll('#concept-part-1 .concept-slide').forEach(el => {
+                if (Number(el.getAttribute('data-slide')) === n) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+            // 진행 점 업데이트
+            document.querySelectorAll('#concept-part-1 .slide-dot').forEach(dot => {
+                const dotN = Number(dot.getAttribute('data-dot'));
+                if (dotN === n) {
+                    dot.classList.remove('bg-slate-200', 'border-slate-400');
+                    dot.classList.add('bg-orange-500', 'border-slate-900');
+                } else {
+                    dot.classList.remove('bg-orange-500', 'border-slate-900');
+                    dot.classList.add('bg-slate-200', 'border-slate-400');
+                }
+            });
+            // 진행 표시 텍스트
+            document.getElementById('slide-indicator').innerText = `${n} / ${TOTAL_SLIDES}`;
+
+            // 이전 버튼: 첫 슬라이드에서는 완전히 숨김
+            const prevBtn = document.getElementById('slide-prev-btn');
+            if (n === 1) {
+                prevBtn.classList.add('hidden');
+            } else {
+                prevBtn.classList.remove('hidden');
+            }
+
+            // 다음 버튼: 마지막 슬라이드에서는 "가치 알아보기 ▶"로 바뀜
+            const nextBtn = document.getElementById('slide-next-btn');
+            if (n === TOTAL_SLIDES) {
+                nextBtn.innerText = '가치 알아보기 ▶';
+                nextBtn.classList.remove('bg-orange-500');
+                nextBtn.classList.add('bg-green-500');
+            } else {
+                nextBtn.innerText = '다음 ▶';
+                nextBtn.classList.add('bg-orange-500');
+                nextBtn.classList.remove('bg-green-500');
+            }
+        }
+
+        function changeSlide(delta) {
+            const next = currentSlide + delta;
+            if (next < 1) return;
+            if (next >TOTAL_SLIDES) {
+                // 마지막 슬라이드에서 "다음"  2단계(가치)로 이동
+                nextConcept();
+                return;
+            }
+            showSlide(next);
+        }
+
+        function nextConcept() {
+            document.getElementById('concept-part-1').classList.add('hidden');
+            document.getElementById('concept-part-2').classList.remove('hidden');
+        }
+        function prevConcept() {
+            document.getElementById('concept-part-2').classList.add('hidden');
+            document.getElementById('concept-part-1').classList.remove('hidden');
+            // 개념 학습 진입 시에는 항상 첫 슬라이드부터 시작
+            showSlide(1);
+        }
+        function completeStep(step) {
+            if(step === 1) {
+                state.progressLevel = Math.max(state.progressLevel, 1);
+                showCustomAlert("학습 완료!", "개념을 모두 익혔어요.\n이제 퀴즈를 풀어볼까요?");
+                goToMain();
+            } else if (step === 2) {
+                state.progressLevel = Math.max(state.progressLevel, 2);
+                goToActivityDirect();
+            }
+        }
+
+        // 퀴즈 완료 후 바로 3단계(소개하기)로 이동
+        function goToActivityDirect() {
+            // 오답이 있을 경우 자기 설명 모두 작성해야 진행 가능
+            const selfExpInputs = document.querySelectorAll('#quiz-wrong-list textarea');
+            for (let i = 0; i < selfExpInputs.length; i++) {
+                if (!selfExpInputs[i].value.trim()) {
+                    selfExpInputs[i].focus();
+                    showCustomAlert("잠깐!", `틀린 문제 ${i + 1}번의 자기 설명을 써주세요!\n내 말로 이유를 정리한 후 넘어갈 수 있어요.`);
+                    return;
+                }
+            }
+            state.progressLevel = Math.max(state.progressLevel, 2);
+            updateMainUI();
+            goToStep('goal');
+        }
+
+        // 퀴즈
+        let quizSession = { bank: [], questions: [], currentIndex: 0, score: 0, retryCount: 0, wrongAnswers: [] };
+        const QUIZ_BANK = [
+            // 1. 국가유산의 의미 (10문제)
+            { q: "국가유산은 우리 조상들이 남겨준 소중한 보물이다.", a: true, desc: "딩동댕! 조상들의 삶과 지혜가 담긴 소중한 보물입니다." },
+            { q: "국가유산은 옛날 물건이라서 버려도 된다.", a: false, desc: "안돼요! 한 번 사라지면 다시는 볼 수 없는 소중한 자산입니다." },
+            { q: "우리는 국가유산을 아끼고 보호해서 <span class='tooltip-word'>후손<span class='tooltip-text'>우리 다음에 태어날 자손들</span></span>에게 물려주어야 한다.", a: true, desc: "맞아요! 미래의 아이들도 볼 수 있도록 잘 지켜야 합니다." },
+            { q: "국가유산을 보면 옛날 사람들이 어떻게 살았는지 알 수 있다.", a: true, desc: "정답! 유산에는 그 시대의 생활 모습이 담겨 있습니다. (역사적 가치)" },
+            { q: "국가유산은 박물관에 가야만 볼 수 있다.", a: false, desc: "아니에요. 우리 동네의 오래된 건물이나 시장, 마을 숲도 유산이 될 수 있습니다." },
+            { q: "국가유산은 돈으로 값을 매길 수 없을 만큼 가치가 있다.", a: true, desc: "딩동댕! 역사와 정신이 담겨 있어 돈보다 훨씬 귀중합니다." },
+            { q: "외국에서 만든 물건은 무조건 우리나라 국가유산이 된다.", a: false, desc: "아니에요. 우리 민족의 문화와 역사가 담긴 것이 국가유산입니다." },
+            { q: "국가유산을 통해 우리는 우리 문화에 대한 자부심을 느낄 수 있다.", a: true, desc: "맞아요. 훌륭한 유산을 보며 자랑스러운 마음을 가질 수 있습니다." },
+            { q: "망가진 국가유산은 다시 원래대로 되돌리기가 매우 쉽다.", a: false, desc: "아니에요. 훼손되면 <span class='tooltip-word'>복원<span class='tooltip-text'>원래대로 회복함</span></span>하기 아주 어렵고 시간도 오래 걸립니다." },
+            { q: "자연 그 자체는 국가유산이 될 수 없다.", a: false, desc: "아니에요! 독도나 성산일출봉처럼 아름다운 자연도 소중한 국가유산입니다. (생태·환경적 가치)" },
+
+            // 2. 국가유산의 분류: 문화유산 vs 무형유산 (20문제)
+            { q: "숭례문(남대문)은 형태가 있는 '문화유산'이다.", a: true, desc: "정답! 눈에 보이는 건물은 문화유산(유형)입니다." },
+            { q: "판소리는 눈에 보이는 형태가 있는 '문화유산'이다.", a: false, desc: "아니에요. 판소리는 소리로 전해지는 '무형유산'입니다." },
+            { q: "석굴암은 돌로 만들었으므로 '문화유산'이다.", a: true, desc: "맞아요! 형태가 있는 건축물입니다." },
+            { q: "아리랑은 사람의 입을 통해 전해지는 '무형유산'이다.", a: true, desc: "딩동댕! 노래나 이야기는 무형유산에 속합니다." },
+            { q: "고려청자는 도자기로 만든 '문화유산'이다.", a: true, desc: "정답! 아름다운 그릇인 고려청자는 문화유산입니다." },
+            { q: "택견은 몸으로 하는 무예이므로 '무형유산'이다.", a: true, desc: "맞습니다! 춤이나 무예처럼 몸짓으로 전해지는 것은 무형유산입니다." },
+            { q: "훈민정음 해례본은 책이므로 '무형유산'이다.", a: false, desc: "아니에요. 책은 만질 수 있는 물건이므로 '문화유산'입니다." },
+            { q: "김장 문화는 다 같이 모여 김치를 담그는 '무형유산'이다.", a: true, desc: "정답! 생활 속의 풍습도 무형유산이 될 수 있습니다." },
+            { q: "첨성대는 별을 보던 건물이므로 '문화유산'이다.", a: true, desc: "딩동댕! 형태가 있는 옛날 건물입니다." },
+            { q: "강강술래는 손을 잡고 도는 놀이이므로 '문화유산'이다.", a: false, desc: "아니에요. 춤과 놀이는 형태가 없는 '무형유산'입니다." },
+            { q: "경복궁은 왕이 살던 궁궐로 '문화유산'이다.", a: true, desc: "맞아요. 건물은 대표적인 문화유산입니다. (역사적 가치)" },
+            { q: "탈춤은 탈만 유산이고 춤은 유산이 아니다.", a: false, desc: "아니에요. 춤과 노래가 어우러진 공연 전체가 '무형유산'입니다." },
+            { q: "백제 금동대향로는 향을 피우는 도구로 '문화유산'이다.", a: true, desc: "정답! 금속으로 만든 아름다운 공예품입니다. (예술적 가치)" },
+            { q: "씨름은 우리 고유의 운동으로 '무형유산'이다.", a: true, desc: "딩동댕! 씨름 기술과 문화는 무형유산입니다." },
+            { q: "다보탑은 돌탑이므로 '무형유산'이다.", a: false, desc: "아니에요. 탑은 만질 수 있으므로 '문화유산'입니다." },
+            { q: "한산 모시 짜기는 옷감을 만드는 기술로 '무형유산'이다.", a: true, desc: "맞습니다! 물건을 만드는 '기술'은 무형유산입니다." },
+            { q: "수원 화성은 성곽이므로 '문화유산'이다.", a: true, desc: "정답! 튼튼하게 지은 성곽 건축물입니다. (과학적 가치)" },
+            { q: "줄타기는 줄 위에서 재주를 부리는 '문화유산'이다.", a: false, desc: "아니에요. 공연 예술은 '무형유산'입니다." },
+            { q: "종묘 제례악은 제사 때 연주하는 음악으로 '무형유산'이다.", a: true, desc: "맞아요! 음악과 춤은 무형유산입니다." },
+            { q: "직지심체요절은 금속 활자로 찍은 책이므로 '문화유산'이다.", a: true, desc: "정답! 세계적인 기록 유산입니다. (과학적 가치)" },
+
+            // 3. 국가유산의 가치: 역사/과학/예술/생태 (20문제)
+            { q: "첨성대의 돌 개수에는 달력의 원리가 숨어 있어 <span class='tooltip-word'>과학적 가치<span class='tooltip-text'>우수한 기술이나 원리</span></span>가 있다.", a: true, desc: "딩동댕! 옛날 사람들의 뛰어난 과학 실력을 보여줍니다. (과학적 가치)" },
+            { q: "고려청자의 신비로운 <span class='tooltip-word'>비색<span class='tooltip-text'>청자 특유의 맑고 푸른 빛깔</span></span>은 예술적 가치를 보여준다.", a: true, desc: "맞아요! 그 아름다움은 세계적으로 유명합니다. (예술적 가치)" },
+            { q: "수원 화성은 <span class='tooltip-word'>거중기<span class='tooltip-text'>무거운 물건을 들어 올리는 기계</span></span>를 사용하여 과학적으로 지었다.", a: true, desc: "정답! 정약용 선생님이 만든 거중기를 이용했습니다. (과학적 가치)" },
+            { q: "하회탈의 웃는 표정에서는 조상들의 예술적 감각을 느낄 수 있다.", a: true, desc: "딩동댕! 탈의 표정이 아주 재미있고 예술적입니다. (예술적 가치)" },
+            { q: "창덕궁 후원은 자연을 파괴하고 만들어서 생태적 가치가 없다.", a: false, desc: "아니에요. 자연 지형을 그대로 살려서 아름다운 정원을 만들었습니다. (생태·환경적 가치)" },
+            { q: "석굴암은 돌을 둥글게 쌓아 만든 과학적인 건축물이다.", a: true, desc: "맞습니다! 무너지지 않게 수학적으로 계산해서 지었습니다. (과학적 가치)" },
+            { q: "훈민정음(한글)은 사람의 발음 기관을 본떠 만든 과학적인 글자이다.", a: true, desc: "정답! 한글의 창제 원리는 매우 과학적입니다. (과학적 가치)" },
+            { q: "제주도 용암동굴은 화산 활동을 알 수 있는 생태적 가치가 있다.", a: true, desc: "맞아요. 자연이 만든 신비로운 동굴입니다. (생태·환경적 가치)" },
+            { q: "선사 시대의 고인돌은 옛날 사람들의 생활을 보여주는 <span class='tooltip-word'>역사적 가치<span class='tooltip-text'>옛날의 생활 모습이나 사건</span></span>가 있다.", a: true, desc: "정답! 아주 먼 옛날의 무덤 양식을 알 수 있습니다. (역사적 가치)" },
+            { q: "한복의 고운 선과 색깔은 과학적 가치만 있다.", a: false, desc: "아니에요! 한복의 아름다움은 '예술적 가치'가 큽니다. (예술적 가치)" },
+            { q: "팔만대장경을 보관하는 건물은 바람이 잘 통하게 지은 과학적 건물이다.", a: true, desc: "딩동댕! 나무판이 썩지 않도록 과학적으로 설계했습니다. (과학적 가치)" },
+            { q: "독도는 다양한 바다 생물이 살고 있는 소중한 자연유산이다.", a: true, desc: "맞아요. 생태적, 환경적 가치가 매우 높습니다. (생태·환경적 가치)" },
+            { q: "온돌은 열을 오랫동안 간직하는 과학적인 난방 장치이다.", a: true, desc: "정답! 조상들의 지혜가 담긴 따뜻한 발명품입니다. (과학적 가치)" },
+            { q: "거북선은 전투에 유리하도록 만든 과학적인 배이다.", a: true, desc: "딩동댕! 덮개와 송곳 등 과학적인 설계가 돋보입니다. (과학적 가치)" },
+            { q: "대동여지도는 십 리마다 눈금을 표시하여 거리를 알 수 있게 한 과학적 지도이다.", a: true, desc: "맞습니다! 김정호 선생님의 과학적인 측량 기술이 담겨 있습니다. (과학적 가치)" },
+            { q: "경주 역사 유적 지구는 신라 시대의 역사를 보여주는 곳이다.", a: true, desc: "정답! 도시 전체가 박물관처럼 많은 역사적 가치를 담고 있습니다. (역사적 가치)" },
+            { q: "한옥은 나무, 흙, 돌 같은 자연 재료로 지어 생태적이다.", a: true, desc: "맞아요. 자연과 어우러지는 친환경적인 집입니다. (생태·환경적 가치)" },
+            { q: "신윤복의 풍속화는 조선 시대 사람들의 생활 모습을 보여주는 역사적 가치가 있다.", a: true, desc: "정답! 그림을 통해 그 당시 옷차림과 생활을 알 수 있습니다. (역사적 가치)" },
+            { q: "남한산성은 병자호란 때 왕이 피신했던 곳으로 역사적 의미가 깊다.", a: true, desc: "맞습니다. 아픈 역사도 우리가 기억해야 할 소중한 가치입니다. (역사적 가치)" },
+            { q: "갯벌은 쓸모없는 땅이라서 생태적 가치가 없다.", a: false, desc: "절대 아니에요! 갯벌은 수많은 생물이 사는 생태계의 보물 창고입니다. (생태·환경적 가치)" }
+        ];
+
+        function resetQuiz() {
+            document.getElementById('quiz-setup').classList.remove('hidden');
+            document.getElementById('quiz-game').classList.add('hidden');
+            document.getElementById('quiz-result-screen').classList.add('hidden');
+            document.getElementById('btn-quiz-back').classList.remove('hidden');
+            document.getElementById('quiz-wrong-list').innerHTML = '';
+            const nw = document.getElementById('quiz-no-wrong');
+            nw.classList.add('hidden');
+            nw.classList.remove('correct-pop');
+            const trophy = document.getElementById('no-wrong-trophy');
+            if (trophy) trophy.classList.remove('trophy-pulse');
+        }
+
+        function startQuizGame(count) {
+            const shuffled = [...QUIZ_BANK].sort(() =>0.5 - Math.random());
+            quizSession.questions = shuffled.slice(0, count);
+            quizSession.currentIndex = 0;
+            quizSession.score = 0;
+            quizSession.retryCount = 0;
+            quizSession.wrongAnswers = [];
+
+            document.getElementById('quiz-setup').classList.add('hidden');
+            document.getElementById('quiz-game').classList.remove('hidden');
+            document.getElementById('btn-quiz-back').classList.add('hidden');
+            
+            renderQuizQuestion();
+        }
+
+        // 색종이(confetti) 발사
+        function launchConfetti(count, big) {
+            const colors = ['#f97316', '#eab308', '#22c55e', '#3b82f6', '#ec4899', '#a855f7'];
+            for (let i = 0; i < count; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                const size = big ? (8 + Math.random() * 12) : (6 + Math.random() * 8);
+                piece.style.width = size + 'px';
+                piece.style.height = size + 'px';
+                piece.style.left = Math.random() * 100 + 'vw';
+                piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                piece.style.animationDuration = (big ? 2.2 : 1.6) + Math.random() * 1.2 + 's';
+                piece.style.animationDelay = Math.random() * 0.3 + 's';
+                document.body.appendChild(piece);
+                setTimeout(() => piece.remove(), 4000);
+            }
+        }
+
+        function renderQuizQuestion() {
+            const currentQ = quizSession.questions[quizSession.currentIndex];
+            quizSession.retryCount = 0; 
+
+            document.getElementById('quiz-progress').innerText = `${quizSession.currentIndex + 1}/${quizSession.questions.length}`;
+            // 툴팁 태그(HTML)가 적용되도록 innerHTML 사용
+            document.getElementById('quiz-question').innerHTML = currentQ.q;
+            
+            const optionsDiv = document.getElementById('quiz-options');
+            optionsDiv.classList.remove('hidden');
+            document.getElementById('quiz-feedback').classList.add('hidden');
+            document.getElementById('quiz-hint').classList.add('hidden');
+
+            // 버튼 활성화 대기 (색상으로 시각화 - 잠김: 회색)
+            const buttons = optionsDiv.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('quiz-locked');
+                btn.classList.remove('quiz-ready');
+            });
+
+            // 2초 후 활성화 (회색 → 선명한 색)
+            setTimeout(() => {
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                    btn.classList.remove('quiz-locked');
+                    btn.classList.add('quiz-ready');
+                    setTimeout(() => btn.classList.remove('quiz-ready'), 400);
+                });
+            }, 2000);
+        }
+
+        function submitQuizAnswer(userAnswer) {
+            const currentQ = quizSession.questions[quizSession.currentIndex];
+            const isCorrect = (userAnswer === currentQ.a);
+            
+            const resultEl = document.getElementById('feedback-result');
+            const textEl = document.getElementById('feedback-text');
+
+            if(isCorrect) {
+                // 정답 로직
+                if(quizSession.retryCount === 0) {
+                    quizSession.score++; // 한 번에 맞췄을 때만 점수 인정
+                }
+
+                // 피드백 UI
+                resultEl.innerHTML = "<span class='text-green-500'>정답입니다! </span>";
+                textEl.innerHTML = currentQ.desc; // [수정됨] innerText ->innerHTML
+
+                document.getElementById('quiz-hint').classList.add('hidden'); // 힌트 숨김
+                document.getElementById('quiz-options').classList.add('hidden'); // 버튼 숨김
+                const fb = document.getElementById('quiz-feedback');
+                fb.classList.remove('hidden'); // 결과창 표시
+                fb.classList.add('correct-pop'); // 펄스 효과
+                setTimeout(() => fb.classList.remove('correct-pop'), 600);
+                launchConfetti(40, false); // 색종이 효과
+            } else {
+                // 오답 로직 (힌트 제공)
+                // 첫 번째 오답만 기록 (retryCount가 0일 때)
+                if (quizSession.retryCount === 0) {
+                    quizSession.wrongAnswers.push(quizSession.questions[quizSession.currentIndex]);
+                }
+                quizSession.retryCount++;
+                
+                // 흔들림 효과
+                const quizBox = document.getElementById('quiz-game');
+                quizBox.classList.add('shake');
+                setTimeout(() =>quizBox.classList.remove('shake'), 500);
+
+                // 힌트 내용 결정
+                let hintMsg = "천천히 다시 읽어보세요.";
+                if(currentQ.q.includes("문화유산") || currentQ.q.includes("무형유산")) {
+                    hintMsg = "형태가 눈에 '보이는지', '보이지 않는지' 생각해보세요.";
+                } else if(currentQ.q.includes("가치") || currentQ.q.includes("과학") || currentQ.q.includes("역사")) {
+                    hintMsg = "조상님들이 왜 이것을 만들었을지 이유를 생각해보세요.";
+                }
+
+                document.getElementById('quiz-hint-text').innerText = `틀렸어요! ${hintMsg} 다시 풀어보세요.`;
+                document.getElementById('quiz-hint').classList.remove('hidden');
+            }
+        }
+
+        function nextQuizQuestion() {
+            quizSession.currentIndex++;
+            if(quizSession.currentIndex < quizSession.questions.length) {
+                renderQuizQuestion();
+            } else {
+                // 퀴즈 종료
+                document.getElementById('quiz-game').classList.add('hidden');
+                document.getElementById('quiz-result-screen').classList.remove('hidden');
+                document.getElementById('btn-quiz-back').classList.add('hidden'); // 결과 화면에서 메인 버튼 숨김
+                document.getElementById('quiz-final-score').innerText = quizSession.score;
+
+                // 오답 목록 렌더링
+                const wrongList = document.getElementById('quiz-wrong-list');
+                const noWrong = document.getElementById('quiz-no-wrong');
+                const wrongCount = document.getElementById('quiz-wrong-count');
+                const wrongs = quizSession.wrongAnswers;
+
+                if (wrongs.length === 0) {
+                    wrongList.classList.add('hidden');
+                    noWrong.classList.remove('hidden');
+                    wrongCount.innerText = '';
+                    // 박사 인증 축하 효과 (큰 색종이 2연발 + 트로피 펄스)
+                    launchConfetti(80, true);
+                    setTimeout(() => launchConfetti(60, true), 400);
+                    noWrong.classList.add('correct-pop');
+                    const trophy = document.getElementById('no-wrong-trophy');
+                    if (trophy) trophy.classList.add('trophy-pulse');
+                } else {
+                    noWrong.classList.add('hidden');
+                    wrongList.classList.remove('hidden');
+                    wrongCount.innerText = `${wrongs.length}개 틀림`;
+                    wrongList.innerHTML = wrongs.map((q, i) => `
+                        <div class="bg-red-50 border-2 border-red-200 rounded-xl p-3">
+                            <p class="text-sm font-black text-red-500 mb-1">틀린 문제 ${i + 1}</p>
+                            <p class="text-sm font-bold text-slate-800 leading-snug break-keep mb-2">${q.q}</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="bg-green-500 text-white text-sm font-black px-2 py-0.5 rounded-full shrink-0">정답</span>
+                                <span class="text-sm font-bold text-green-700">${q.a ? 'O (맞다)' : 'X (아니다)'}</span>
+                            </div>
+                            <div class="bg-white rounded-lg p-2 border border-red-100 mb-2">
+                                <p class="text-sm font-bold text-slate-600 leading-snug">${q.desc}</p>
+                            </div>
+                            <div class="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-2">
+                                <p class="text-sm font-black text-yellow-700 mb-1">이제 이해한 내용을 내 말로 써보세요</p>
+                                <textarea rows="2" placeholder="예) 이 문제는 ○○에 관한 것이고, 정답이 ○○인 이유는..." class="w-full bg-white border border-yellow-300 rounded p-1.5 text-sm font-medium focus:outline-none focus:border-yellow-500 resize-none"></textarea>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        // 활동 로직
+        function startGame(count) {
+            state.totalItems = count;
+            state.currentItem = 1;
+            hideAllScenes();
+            setActiveTab('goal');  // 활동 중에도 '소개' 탭 활성 유지
+            document.getElementById('scene-activity').classList.remove('hidden');
+            document.getElementById('progressArea').classList.remove('hidden');
+            document.getElementById('progressArea').classList.add('flex');
+            updateProgress();
+            setTip('start');
+        }
+        function updateProgress() {
+            const percent = ((state.currentItem - 1) / state.totalItems) * 100;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('stepIndicator').innerText = `${state.totalItems}개 중 ${state.currentItem}번째`;
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputDesc').value = '';
+            document.getElementById('viewName').innerText = '이름 없음';
+            document.getElementById('viewDesc').innerText = '내용을 입력하세요.';
+            document.getElementById('viewImage').classList.add('hidden');
+            document.getElementById('imgPlaceholder').classList.remove('hidden');
+            document.getElementById('viewImage').src = '';
+            document.getElementById('inputImage').value = '';
+            const imgStatus = document.getElementById('imageStatus');
+            if (imgStatus) {
+                imgStatus.innerText = '선택된 사진 없음';
+                imgStatus.classList.remove('text-green-600');
+                imgStatus.classList.add('text-slate-400');
+            }
+            ['stat1', 'stat2', 'stat3', 'stat4'].forEach(id => {
+                document.getElementById(id).value = 50;
+                updateStats();
+            });
+            // 이유 입력란 초기화 및 닫기
+            ['reason1', 'reason2', 'reason3', 'reason4'].forEach(id => {
+                const box = document.getElementById(id);
+                box.classList.remove('open');
+                box.querySelector('textarea').value = '';
+            });
+            // 카드 이유 표시 초기화
+            [1, 2, 3, 4].forEach(n => {
+                const el = document.getElementById(`view-reason${n}`);
+                el.innerText = '';
+                el.classList.add('hidden');
+            });
+            setTip('start');
+        }
+        // ================================
+        // 버튼 상태 유틸
+        // ================================
+        function setCompleteBtn(loading) {
+            const btn = document.getElementById('completeBtn');
+            if (!btn) return;
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="inline-block animate-spin mr-2"></span>저장 중...';
+                btn.className = 'w-full py-2.5 bg-slate-400 border-3 border-slate-600 rounded-xl font-black text-lg text-white shadow-none transition cursor-not-allowed';
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '작성 완료 (도장 쾅!)';
+                btn.className = 'w-full py-2.5 bg-orange-500 border-3 border-slate-900 rounded-xl font-black text-lg text-white shadow-[4px_4px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition';
+            }
+        }
+
+        function completeItem() {
+            const name = document.getElementById('inputName').value.trim();
+            if (!name) { showCustomAlert("잠깐!", "국가유산 이름을 적어주세요!"); return; }
+
+            const desc = document.getElementById('inputDesc').value.trim();
+            if (!desc) {
+                document.getElementById('inputDesc').focus();
+                showCustomAlert("잠깐!", "나만의 소개글을 작성해주세요!");
+                return;
+            }
+
+            // 가치 이유 중 최소 1개 작성 (3개 모두는 부담이므로 하나만 써도 통과)
+            const reasonIds = ['reason1', 'reason2', 'reason3', 'reason4'];
+            const filledCount = reasonIds.filter(id =>
+                document.getElementById(id).querySelector('textarea').value.trim()
+            ).length;
+            if (filledCount === 0) {
+                openReason('reason1'); // 첫 번째 이유 입력란 열기
+                showCustomAlert("잠깐!", "가치 이유를 하나 이상 써주세요!\n역사·과학·예술·생태 중 가장 자신 있는 한 가지만 적어도 좋아요.");
+                return;
+            }
+
+            // 즉시 버튼 비활성화 (중복 클릭 방지)
+            setCompleteBtn(true);
+
+            // 제출 기본 데이터 (이미지 제외)
+            const baseData = {
+                studentId:    state.studentId,
+                studentName:  state.studentName,
+                heritageName: name,
+                description:  document.getElementById('inputDesc').value,
+                stat1:   document.getElementById('stat1').value,
+                stat2:   document.getElementById('stat2').value,
+                stat3:   document.getElementById('stat3').value,
+                stat4:   document.getElementById('stat4').value,
+                reason1: document.getElementById('reason1').querySelector('textarea').value,
+                reason2: document.getElementById('reason2').querySelector('textarea').value,
+                reason3: document.getElementById('reason3').querySelector('textarea').value,
+                reason4: document.getElementById('reason4').querySelector('textarea').value,
+            };
+
+            // 카드 캡처 먼저 완성 카드를 시트에 저장
+            const card = document.getElementById("cardArea");
+            const descParent = document.getElementById('viewDesc').parentElement;
+
+            const originalCardHeight   = card.style.height;
+            const originalTransform    = card.style.transform;
+            const originalDescOverflow = descParent.style.overflowY;
+            const originalDescHeight   = descParent.style.height;
+
+            card.style.height  = 'auto';
+            card.style.minHeight = '280px';
+            card.style.transform = 'none';
+            descParent.style.overflowY = 'visible';
+            descParent.style.height    = 'auto';
+
+            // 저장 (모드별: GAS/연동=시트 저장, 데모=안내만)
+            submitCard(baseData, null, function(err) {
+                console.error('서버 저장 실패:', err);
+                showCustomAlert("저장 오류", "저장 중 문제가 생겼어요.\n선생님께 알려주세요.\n(" + (err.message || '네트워크 오류') + ")");
+            });
+
+            // 캡처 완료/실패와 무관하게 다음 단계로 진행시키는 공통 함수 (중복 실행 방지)
+            let advanced = false;
+            const restoreStyles = () => {
+                card.style.height    = originalCardHeight;
+                card.style.minHeight = '';
+                card.style.transform = originalTransform;
+                descParent.style.overflowY = originalDescOverflow;
+                descParent.style.height    = originalDescHeight;
+            };
+            const proceedNext = (highResUrl) => {
+                if (advanced) return;   // 이미 진행했으면 무시
+                advanced = true;
+                restoreStyles();
+
+                if (highResUrl) {
+                    state.results.push({
+                        dataUrl:      highResUrl,
+                        heritageName: name,
+                        reasons: [baseData.reason1, baseData.reason2, baseData.reason3, baseData.reason4]
+                    });
+                }
+
+                state.uploadedImage = '';
+                clearLocalDraft();
+                if (state.currentItem < state.totalItems) {
+                    state.currentItem++;
+                    updateProgress();
+                    setCompleteBtn(false);
+                    showCustomAlert("성공!", "잘했어요! 다음 국가유산으로 넘어갑니다.");
+                } else {
+                    state.progressLevel = 3;
+                    showResult();
+                }
+            };
+
+            // html2canvas 라이브러리가 없으면 이미지 없이 바로 진행
+            if (typeof html2canvas === 'undefined') {
+                console.warn('html2canvas 미로드 - 이미지 없이 진행');
+                proceedNext(null);
+                return;
+            }
+
+            // 캡처가 8초 안에 안 끝나면(행 방지) 이미지 없이라도 진행
+            const captureTimeout = setTimeout(() => {
+                console.warn('캡처 시간 초과 - 이미지 없이 진행');
+                proceedNext(null);
+            }, 8000);
+
+            html2canvas(card, {
+                scale: 2,
+                backgroundColor: '#ffffff',
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                clearTimeout(captureTimeout);
+                const highResUrl = canvas.toDataURL('image/png');
+                proceedNext(highResUrl);
+            }).catch(err => {
+                clearTimeout(captureTimeout);
+                console.error('캡처 실패:', err);
+                proceedNext(null); // 캡처 실패해도 시트 저장은 됐으니 다음으로 진행
+            });
+        }
+        function showResult() {
+            hideAllScenes();
+            setActiveTab('result');
+            document.getElementById('scene-result').classList.remove('hidden');
+            state.progressLevel = Math.max(state.progressLevel, 4);
+
+            // 스스로 평가 상태 초기화 (메인 버튼 다시 잠금)
+            const mainBtn = document.getElementById('btn-result-main');
+            if (mainBtn) {
+                mainBtn.disabled = true;
+                mainBtn.classList.remove('bg-white', 'border-slate-900', 'text-slate-700', 'hover:bg-slate-100');
+                mainBtn.classList.add('bg-slate-200', 'border-slate-400', 'text-slate-400', 'cursor-not-allowed');
+            }
+            ['eval-good', 'eval-soso'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.classList.remove('ring-4', 'ring-offset-2', 'ring-green-400', 'ring-yellow-400', 'opacity-50');
+            });
+            const guide = document.getElementById('eval-guide');
+            if (guide) {
+                guide.innerText = '먼저 스스로 평가를 해주세요!';
+                guide.classList.remove('text-green-600');
+                guide.classList.add('text-orange-500');
+            }
+
+            const grid = document.getElementById('resultGrid');
+            grid.innerHTML = '';
+            const labels = [' 역사', ' 과학', ' 예술', ' 생태'];
+            const colors = ['text-red-500', 'text-blue-500', 'text-green-500', 'text-teal-500'];
+            const borders = ['border-red-200', 'border-blue-200', 'border-green-200', 'border-teal-200'];
+
+            state.results.forEach((item) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex flex-col items-center gap-3 w-full";
+
+                // 카드 이미지
+                const img = document.createElement('img');
+                img.src = item.dataUrl;
+                img.className = "w-[550px] rounded-lg shadow-xl border-2 border-slate-900 bg-white";
+                wrapper.appendChild(img);
+
+                // 이유 요약 (작성된 것만 표시)
+                const filledReasons = item.reasons.filter(r =>r.trim());
+                if (filledReasons.length >0) {
+                    const reasonBox = document.createElement('div');
+                    reasonBox.className = "w-[550px] bg-white border-2 border-slate-900 rounded-xl p-4 shadow-sm";
+                    reasonBox.innerHTML = `
+                        <p class="font-black text-slate-700 text-sm mb-2 border-b border-slate-200 pb-1">내 가치 분석 이유</p>
+                        <div class="space-y-2">
+                            ${item.reasons.map((r, i) =>r.trim() ? `
+                                <div class="flex items-start gap-2">
+                                    <span class="font-black text-sm ${colors[i]} shrink-0 mt-0.5">${labels[i]}</span>
+                                    <p class="text-sm font-bold text-slate-600 leading-snug border-l-2 ${borders[i]} pl-2">${r}</p>
+                                </div>
+                            ` : '').join('')}
+                        </div>
+                    `;
+                    wrapper.appendChild(reasonBox);
+                }
+
+                // 다운로드 버튼
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = "bg-indigo-500 text-white font-black px-8 py-3 rounded-xl border-3 border-slate-900 shadow-[4px_4px_0px_#0f172a] hover:translate-y-1 hover:shadow-none transition text-lg";
+                downloadBtn.innerHTML = ` ${item.heritageName} 카드 저장하기`;
+                downloadBtn.onclick = function() {
+                    const a = document.createElement('a');
+                    a.href = item.dataUrl;
+                    a.download = `${state.studentName}_${item.heritageName}_카드.png`;
+                    a.click();
+                };
+                wrapper.appendChild(downloadBtn);
+                grid.appendChild(wrapper);
+            });
+        }
+        function goToResultIfReady() {
+            if(state.progressLevel >= 3) goToStep('result');
+            else showCustomAlert("잠깐!", "아직 활동을 완료하지 않았어요.\n활동을 먼저 끝내주세요!");
+        }
+        function finishLearning(type) {
+            if(type === 'good') showCustomAlert("최고예요!", "국가유산 가이드 활동을\n멋지게 완료했어요! ");
+            else showCustomAlert("수고했어요!", "오늘 배운 내용을\n다음에 또 떠올려 보아요! ");
+
+            // 선택한 평가 버튼 강조, 다른 버튼 흐리게
+            const goodBtn = document.getElementById('eval-good');
+            const sosoBtn = document.getElementById('eval-soso');
+            [goodBtn, sosoBtn].forEach(b => b.classList.remove('ring-4', 'ring-offset-2', 'opacity-50'));
+            const picked = (type === 'good') ? goodBtn : sosoBtn;
+            const other  = (type === 'good') ? sosoBtn : goodBtn;
+            picked.classList.add('ring-4', 'ring-offset-2', (type === 'good') ? 'ring-green-400' : 'ring-yellow-400');
+            other.classList.add('opacity-50');
+
+            // 메인으로 돌아가기 버튼 활성화
+            const mainBtn = document.getElementById('btn-result-main');
+            mainBtn.disabled = false;
+            mainBtn.classList.remove('bg-slate-200', 'border-slate-400', 'text-slate-400', 'cursor-not-allowed');
+            mainBtn.classList.add('bg-white', 'border-slate-900', 'text-slate-700', 'hover:bg-slate-100');
+
+            // 안내 문구 변경
+            const guide = document.getElementById('eval-guide');
+            if (guide) {
+                guide.innerText = '이제 메인으로 돌아갈 수 있어요!';
+                guide.classList.remove('text-orange-500');
+                guide.classList.add('text-green-600');
+            }
+        }
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(){
+                try {
+                    // 원본을 리사이즈 + 압축 셀에 담길 수 있는 크기로 만듦
+                    const compressed = await processUploadedImage(reader.result);
+                    state.uploadedImage = compressed;
+
+                    const output = document.getElementById('viewImage');
+                    output.src = compressed; // 카드에도 압축본 표시 (일관성)
+                    output.classList.remove('hidden');
+                    document.getElementById('imgPlaceholder').classList.add('hidden');
+                    const status = document.getElementById('imageStatus');
+                    if (status) {
+                        status.innerText = '사진 선택됨';
+                        status.classList.remove('text-slate-400');
+                        status.classList.add('text-green-600');
+                    }
+                    setTip('stats');
+                } catch (err) {
+                    showCustomAlert("오류", "이미지를 불러오지 못했어요.\n다른 사진으로 시도해주세요.");
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+        document.getElementById('inputName').addEventListener('input', function() {
+            document.getElementById('viewName').innerText = this.value || '이름 없음';
+            scheduleDraftSave();
+        });
+        document.getElementById('inputDesc').addEventListener('input', function() {
+            document.getElementById('viewDesc').innerText = this.value || '내용을 입력하세요.';
+            scheduleDraftSave();
+        });
+        function updateStats() {
+            const s1 = document.getElementById('stat1').value;
+            const s2 = document.getElementById('stat2').value;
+            const s3 = document.getElementById('stat3').value;
+            const s4 = document.getElementById('stat4').value;
+            document.getElementById('val-stat1').innerText = s1;
+            document.getElementById('val-stat2').innerText = s2;
+            document.getElementById('val-stat3').innerText = s3;
+            document.getElementById('val-stat4').innerText = s4;
+            document.getElementById('bar1').style.width = s1 + '%';
+            document.getElementById('bar2').style.width = s2 + '%';
+            document.getElementById('bar3').style.width = s3 + '%';
+            document.getElementById('bar4').style.width = s4 + '%';
+            scheduleDraftSave();
+        }
+
+        // 슬라이더 조작 시 해당 이유 입력란만 열고 나머지 닫기
+        function openReason(targetId) {
+            ['reason1', 'reason2', 'reason3', 'reason4'].forEach(id => {
+                const box = document.getElementById(id);
+                if (id === targetId) {
+                    box.classList.add('open');
+                    setTimeout(() =>box.querySelector('textarea').focus(), 300);
+                } else {
+                    box.classList.remove('open');
+                }
+            });
+        }
+
+        // 이유 입력 카드 미리보기 실시간 반영
+        function updateReasonPreview(num, value) {
+            const el = document.getElementById(`view-reason${num}`);
+            if (value.trim()) {
+                el.innerText = value.trim();
+                el.classList.remove('hidden');
+            } else {
+                el.innerText = '';
+                el.classList.add('hidden');
+            }
+            scheduleDraftSave();
+        }
+        const tips = {
+            'start': "우리 지역의 국가유산을 찾아볼까요? 먼저 이름을 적어주세요.",
+            'name': "형태가 있는 '문화유산'인가요, 형태가 없는 '무형유산'인가요?",
+            'image': "국가유산의 특징이 잘 드러난 사진을 붙여주세요.",
+            'stats': "어떤 가치(역사, 과학, 예술)가 가장 뛰어난가요? 점수를 매겨보세요.",
+            'desc': "교과서 문장 블록을 활용해보세요! 우리 지역의 자랑거리로 소개해주세요."
+        };
+        function setTip(key) {
+            const tipBox = document.getElementById('teacherTipText');
+            tipBox.style.opacity = 0.5;
+            setTimeout(() => { tipBox.innerText = tips[key]; tipBox.style.opacity = 1; }, 100);
+        }
+        function addKeyword(word) {
+            const textarea = document.getElementById('inputDesc');
+            const currentVal = textarea.value;
+            if(currentVal.length >0 && !currentVal.endsWith(' ')) { textarea.value += ' ' + word; } else { textarea.value += word; }
+            textarea.focus();
+            document.getElementById('viewDesc').innerText = textarea.value;
+        }
+        function showExample() {
+            if(document.getElementById('scene-activity').classList.contains('hidden')) {
+                startGame(1);
+            }
+            document.getElementById('inputName').value = "숭례문";
+            document.getElementById('viewName').innerText = "숭례문";
+            const exDesc = "우리 지역(서울)의 자랑스러운 문화유산입니다. 조선 시대 도성의 남쪽 정문으로, 튼튼하게 지은 조상들의 과학적 기술과 예술적 아름다움이 담겨 있습니다. 우리가 소중히 보존해야 합니다.";
+            document.getElementById('inputDesc').value = exDesc;
+            document.getElementById('viewDesc').innerText = exDesc;
+            document.getElementById('stat1').value = 95;
+            document.getElementById('stat2').value = 90;
+            document.getElementById('stat3').value = 85;
+            updateStats();
+            setTip('desc');
+            showCustomAlert("짠!", "숭례문 예시 카드가 완성되었어요.\n'문화유산'과 '과학적 기술'이라는 말이 들어갔죠?");
+        }
+
+        // ================================
+        // Scale 방식 반응형 + 세로 화면 안내 (리코더 앱 패턴)
+        // ================================
+        (function() {
+            const BASE_W = 1000;    // 바인더 기준 너비
+            const BASE_H = 640;     // 바인더 기준 높이
+            const TAB_W = 70;       // 오른쪽 탭 돌출 폭
+            const MIN_SCALE = 0.35;
+            const MAX_SCALE = 1.8;
+
+            function applyScale() {
+                const wrapper = document.getElementById('scale-wrapper');
+                if (!wrapper) return;
+
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+
+                // 탭 폭까지 포함해 계산 (탭이 화면 밖으로 밀려나지 않도록)
+                const scaleW = vw / (BASE_W + TAB_W);
+                const scaleH = vh / BASE_H;
+                const scale = Math.min(scaleW, scaleH, MAX_SCALE);
+                const final = Math.max(scale, MIN_SCALE);
+
+                wrapper.style.transform = `scale(${final})`;
+            }
+
+            function checkOrientation() {
+                const overlay = document.getElementById('rotate-overlay');
+                if (!overlay) return;
+                // 세로 모드거나 너무 좁은 경우
+                const isPortrait = window.innerWidth < window.innerHeight;
+                const isTooNarrow = window.innerWidth < 500;
+                if (isPortrait || isTooNarrow) {
+                    overlay.classList.remove('hidden');
+                } else {
+                    overlay.classList.add('hidden');
+                }
+            }
+
+            function onResize() {
+                applyScale();
+                checkOrientation();
+            }
+
+            window.addEventListener('resize', onResize);
+            window.addEventListener('orientationchange', onResize);
+            // 초기 실행
+            onResize();
+            loadStudentDropdown(); // 로그인 드롭다운 채우기
+            initSettingsUI();      // 선생님 메뉴 표시 여부 결정
+        })();
+    </script>
+
+<script>
+/* 체험 모드 안내 배너 (전 앱 일관) */
+(function () {
+  function isDemo() {
+    try {
+      if (/[#&]c=/.test(location.hash || '')) return false;
+      if (typeof google !== 'undefined' && google.script && google.script.run) return false;
+      if (localStorage.getItem('ngh_exec_url')) return false;
+      return true;
+    } catch (e) { return true; }
+  }
+  function show() {
+    if (document.getElementById('__demoBar')) return;
+    if (!isDemo()) return;
+    var bar = document.createElement('div');
+    bar.id = '__demoBar';
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483000;background:#1f2937;color:#fff;font-size:13px;line-height:1.45;padding:9px 38px calc(9px + env(safe-area-inset-bottom)) 14px;text-align:center;font-family:sans-serif;box-shadow:0 -2px 10px rgba(0,0,0,0.25);';
+    bar.textContent = '체험 모드예요 · 활동 기록은 이 기기에만 저장돼요. 선생님이 구글 시트를 연결하면 시트에 저장됩니다.';
+    var x = document.createElement('button');
+    x.type = 'button'; x.setAttribute('aria-label', '닫기'); x.textContent = '\u2715';
+    x.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:#fff;font-size:16px;line-height:1;cursor:pointer;padding:6px;';
+    x.onclick = function () { try { bar.remove(); } catch (e) { bar.style.display = 'none'; } };
+    bar.appendChild(x);
+    document.body.appendChild(bar);
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', show);
+  } else { show(); }
+})();
+</script>
+</body>
+</html>
