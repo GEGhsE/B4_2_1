@@ -408,9 +408,9 @@
                 </button>
                 <p id="login-error" class="hidden mt-4 text-red-500 font-bold text-2xl text-center"></p>
 
-                <!-- 선생님 메뉴 (설정) -->
+                <!-- 선생님 설정 (설정) -->
                 <div id="teacher-menu-wrap" class="hidden mt-5">
-                    <button onclick="toggleSettings()" class="w-full bg-white border-2 border-slate-400 rounded-lg text-xl text-slate-500 py-2.5 hover:bg-slate-50 transition">선생님 메뉴</button>
+                    <button onclick="toggleSettings()" class="w-full bg-white border-2 border-slate-400 rounded-lg text-xl text-slate-500 py-2.5 hover:bg-slate-50 transition">선생님 설정</button>
 
                     <div id="settings-panel" class="hidden mt-3 bg-slate-50 border-2 border-slate-300 rounded-xl p-5 text-left">
                         <p class="text-lg text-slate-600 mb-2">내 구글 시트 웹앱 주소를 붙여넣고 연결하세요.</p>
@@ -1189,7 +1189,7 @@
 
         let RUN_MODE = 'demo';   // 'gas' | 'linked' | 'demo'
         let EXEC_URL = '';       // 연동 모드에서 사용할 선생님 웹앱 주소
-        let SHOW_SETTINGS = true; // 설정(선생님 메뉴) 버튼 표시 여부
+        let SHOW_SETTINGS = true; // 설정(선생님 설정) 버튼 표시 여부
 
         (function detectMode() {
             // 1) GAS 모드: google.script.run 사용 가능
@@ -1350,7 +1350,7 @@
         // 로그인 로직
         // ================================
         // ================================
-        // 선생님 메뉴 (설정) — 연동 주소 관리
+        // 선생님 설정 (설정) — 연동 주소 관리
         // ================================
         function initSettingsUI() {
             const wrap = document.getElementById('teacher-menu-wrap');
@@ -1364,7 +1364,7 @@
                     document.getElementById('connected-info').classList.remove('hidden');
                 }
             } else {
-                // 학생용 링크 접속 또는 GAS 모드: 선생님 메뉴 자체를 DOM에서 제거
+                // 학생용 링크 접속 또는 GAS 모드: 선생님 설정 자체를 DOM에서 제거
                 wrap.remove();
             }
         }
@@ -2540,7 +2540,7 @@
             // 초기 실행
             onResize();
             loadStudentDropdown(); // 로그인 드롭다운 채우기
-            initSettingsUI();      // 선생님 메뉴 표시 여부 결정
+            initSettingsUI();      // 선생님 설정 표시 여부 결정
         })();
     </script>
 
